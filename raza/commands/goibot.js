@@ -311,14 +311,18 @@ function extractQuery(message, keywords) {
     query = query.replace(regex, '');
   }
   
-  const removeWords = ['mujhe', 'meri', 'sunao', 'dikhao', 'lagao', 'bajao', 'play', 'ka', 'ki', 'ke', 'se', 'ko', 'hai', 'please', 'plz', 'pls', 'yaar', 'bro', 'ek', 'dost'];
-  for (const word of removeWords) {
-    if (query.split(' ').length <= 1) break;
-    const regex = new RegExp(`^${word}\\s+|\\s+${word}$|\\s+${word}\\s+`, 'gi');
-    query = query.replace(regex, ' ');
+  query = query.replace(/\s+/g, ' ').trim();
+  
+  const removeWords = ['mujhe', 'meri', 'sunao', 'dikhao', 'lagao', 'bajao', 'play', 'ka', 'ki', 'ke', 'se', 'ko', 'hai', 'please', 'plz', 'pls', 'yaar', 'bro', 'ek', 'dost', 'de', 'do', 'karo', 'krdo', 'kardo'];
+  
+  let words = query.split(' ').filter(w => w.length > 0);
+  words = words.filter(w => !removeWords.includes(w.toLowerCase()));
+  
+  if (words.length === 0) {
+    return query.replace(/\s+/g, ' ').trim();
   }
   
-  return query.replace(/\s+/g, ' ').trim();
+  return words.join(' ').trim();
 }
 
 async function getAIResponse(userMessage, chatHistory, userName, userGender) {
