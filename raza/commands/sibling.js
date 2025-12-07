@@ -96,7 +96,7 @@ async function getUserInfo(api, uid) {
 
 module.exports.run = async ({ api, event }) => {
   const { threadID, messageID, senderID } = event;
-  const mention = Object.keys(event.mentions);
+  const mention = Object.keys(event.mentions || {});
 
   try {
     await downloadTemplate();
@@ -106,7 +106,7 @@ module.exports.run = async ({ api, event }) => {
     let senderInfo = await getUserInfo(api, senderID);
     let senderGender = senderInfo.gender === 1 ? "female" : senderInfo.gender === 2 ? "male" : detectGender(senderInfo.name || "");
 
-    if (mention.length > 0 && mention[0]) {
+    if (mention.length > 0 && mention[0] && mention[0] !== senderID) {
       two = mention[0];
     } else {
       const members = await getThreadMembers(api, threadID);
@@ -137,8 +137,20 @@ module.exports.run = async ({ api, event }) => {
       two = oppositeGenderMembers[Math.floor(Math.random() * oppositeGenderMembers.length)];
     }
 
-    const avatarOne = await getAvatar(one);
-    const avatarTwo = await getAvatar(two);
+    let avatarOne, avatarTwo;
+    try {
+      avatarOne = await getAvatar(one);
+    } catch (error) {
+      console.error(`Failed to get avatar for ${one}:`, error.message);
+      return api.sendMessage("≿━━━━༺❀༻━━━━≾\n❌ 𝐅𝐚𝐢𝐥𝐞𝐝 𝐭𝐨 𝐠𝐞𝐭 𝐲𝐨𝐮𝐫 𝐚𝐯𝐚𝐭𝐚𝐫!\n≿━━━━༺❀༻━━━━≾", threadID, messageID);
+    }
+    
+    try {
+      avatarTwo = await getAvatar(two);
+    } catch (error) {
+      console.error(`Failed to get avatar for ${two}:`, error.message);
+      return api.sendMessage("≿━━━━༺❀༻━━━━≾\n❌ 𝐅𝐚𝐢𝐥𝐞𝐝 𝐭𝐨 𝐠𝐞𝐭 𝐩𝐚𝐫𝐭𝐧𝐞𝐫 𝐚𝐯𝐚𝐭𝐚𝐫!\n≿━━━━༺❀༻━━━━≾", threadID, messageID);
+    }
 
     const circleOne = await makeCircularImage(avatarOne, 210);
     const circleTwo = await makeCircularImage(avatarTwo, 210);
