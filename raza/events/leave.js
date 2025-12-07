@@ -18,22 +18,14 @@ module.exports = {
       try {
         await api.addUserToGroup(leftParticipantFbId, threadID);
         
-        let name = 'Unknown';
-        try {
-          const info = await api.getUserInfo(leftParticipantFbId);
-          name = info[leftParticipantFbId]?.name || 'Unknown';
-        } catch {}
+        let name = await Users.getNameUser(leftParticipantFbId);
         
         send.send(`${name}, you can't leave! Anti-out is enabled. 🔒`, threadID);
         return;
       } catch {}
     }
     
-    let name = 'Unknown';
-    try {
-      const info = await api.getUserInfo(leftParticipantFbId);
-      name = info[leftParticipantFbId]?.name || 'Unknown';
-    } catch {}
+    let name = await Users.getNameUser(leftParticipantFbId);
     
     let threadInfo;
     try {

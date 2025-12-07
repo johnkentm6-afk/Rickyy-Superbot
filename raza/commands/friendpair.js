@@ -84,7 +84,19 @@ async function getUserInfo(api, uid) {
   });
 }
 
-module.exports.run = async ({ api, event }) => {
+async function getProperName(api, uid, Users) {
+  if (Users && Users.getNameUser) {
+    return await Users.getNameUser(uid);
+  }
+  const info = await getUserInfo(api, uid);
+  let name = info.name || '';
+  if (!name || name.toLowerCase().includes('facebook')) {
+    name = info.firstName || info.alternateName || 'Friend';
+  }
+  return name;
+}
+
+module.exports.run = async ({ api, event, Users }) => {
   const { threadID, messageID, senderID } = event;
   const mention = Object.keys(event.mentions);
 
@@ -121,10 +133,8 @@ module.exports.run = async ({ api, event }) => {
     const outputPath = path.join(cacheDir, `friendpair_${one}_${two}_${Date.now()}.png`);
     await template.write(outputPath);
 
-    const userOneInfo = await getUserInfo(api, one);
-    const userTwoInfo = await getUserInfo(api, two);
-    const nameOne = userOneInfo.name || "User 1";
-    const nameTwo = userTwoInfo.name || "User 2";
+    let nameOne = await getProperName(api, one, Users);
+    let nameTwo = await getProperName(api, two, Users);
     const randomMsg = friendshipMessages[Math.floor(Math.random() * friendshipMessages.length)];
 
     api.sendMessage(
