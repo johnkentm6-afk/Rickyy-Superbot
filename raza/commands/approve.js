@@ -1,7 +1,7 @@
 module.exports = {
   config: {
     name: 'approve',
-    aliases: ['accept', 'allow'],
+    aliases: ['approvee', 'allow'],
     description: 'Approve or unapprove a group',
     usage: 'approve [threadID] / unapprove [threadID]',
     category: 'Admin',

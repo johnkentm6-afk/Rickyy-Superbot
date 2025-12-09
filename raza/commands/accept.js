@@ -1,7 +1,7 @@
 module.exports = {
   config: {
     name: 'accept',
-    aliases: ['acceptfr', 'acceptrequest'],
+    aliases: ['accept', 'acceptrequest'],
     description: 'Accept friend requests',
     usage: 'accept [uid/all]',
     category: 'Friend',
