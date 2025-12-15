@@ -1,8 +1,8 @@
 {
-  "BOTNAME": "Rickyy ",
+  "BOTNAME": "Rickyy",
   "PREFIX": "&",
   "ADMINBOT": [
-    "61581956827969",
+    "61581956827969"
   ],
   "REACT_DELETE_EMOJI": "😠",
   "PREFIX_ENABLED": true,
