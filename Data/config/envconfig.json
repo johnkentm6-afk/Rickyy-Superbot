@@ -1,14 +1,12 @@
 {
-  "BOTNAME": "RDX BOT ",
-  "PREFIX": ".",
+  "BOTNAME": "Rickyy ",
+  "PREFIX": "&",
   "ADMINBOT": [
-    "100009012838085",
-    "",
-    ""
+    "61581956827969",
   ],
   "REACT_DELETE_EMOJI": "😠",
   "PREFIX_ENABLED": true,
-  "ADMIN_ONLY_MODE": false,
+  "ADMIN_ONLY_MODE": true,
   "AUTO_ISLAMIC_POST": true,
   "AUTO_GROUP_MESSAGE": true,
   "TIMEZONE": "Asia/Karachi",
