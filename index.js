@@ -26,13 +26,13 @@ function getConfig() {
     return fs.readJsonSync(configPath);
   } catch {
     return {
-      BOTNAME: 'RAZA BOT',
+      BOTNAME: 'Rickyy',
       PREFIX: '.',
-      ADMINBOT: ['61582493356125'],
+      ADMINBOT: ['61581956827969'],
       TIMEZONE: 'Asia/Karachi',
       PREFIX_ENABLED: true,
       REACT_DELETE_EMOJI: '😡',
-      ADMIN_ONLY_MODE: false,
+      ADMIN_ONLY_MODE: true,
       AUTO_ISLAMIC_POST: true,
       AUTO_GROUP_MESSAGE: true,
       APPROVE_ONLY: false
