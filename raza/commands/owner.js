@@ -16,7 +16,7 @@ module.exports = {
     const { threadID, messageID } = event;
 
     const ownerPics = [
-      'https://i.ibb.co/KcxP16kW/597739190-1912110929386224-7660142784435343126-n.jpg',
+      'https://i.ibb.co/CcPP1Mb/4b73da24d80b.jpg',
     ];
 
     const randomPic = ownerPics[Math.floor(Math.random() * ownerPics.length)];
@@ -40,13 +40,13 @@ module.exports = {
 ╠═══════════════════════════╣
 ║  🤖 𝐁𝐨𝐭 𝐃𝐞𝐭𝐚𝐢𝐥𝐬:           ║
 ║                           ║
-║  📛 Name: ${config.BOTNAME || 'RAZA BOT'}
-║  ⚡ Prefix: ${config.PREFIX || '.'}
+║  📛 Name: ${config.BOTNAME || 'Rickyy D. Kantutero'}
+║  ⚡ Prefix: ${config.PREFIX || '&'}
 ║  💻 Version: 2.0.0        ║
 ║  🛠️ Framework: WS3-FCA    ║
 ║                           ║
 ╠═══════════════════════════╣
-║  💝 fuckboy to!!          ║
+║  💝 di ako fuckboy tol!!          ║
 ╚═══════════════════════════╝
     `.trim();
 
