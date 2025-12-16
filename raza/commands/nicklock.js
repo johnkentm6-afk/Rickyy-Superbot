@@ -6,9 +6,7 @@ const nicklockPath = path.join(__dirname, '../data/nicklock.json');
 function getNicklockData() {
   try {
     fs.ensureDirSync(path.dirname(nicklockPath));
-    if (!fs.existsSync(nicklockPath)) {
-      fs.writeJsonSync(nicklockPath, { locks: {} });
-    }
+    if (!fs.existsSync(nicklockPath)) fs.writeJsonSync(nicklockPath, { locks: {} });
     return fs.readJsonSync(nicklockPath);
   } catch {
     return { locks: {} };
@@ -28,177 +26,65 @@ module.exports = {
   config: {
     name: 'nicklock',
     aliases: ['locknick', 'nlock'],
-    description: 'Lock nickname - auto restore if changed',
-    usage: 'nicklock [uid/mention] [nickname] or nicklock off [uid/mention]',
+    description: 'Lock nickname globally - auto restore if changed',
+    usage: 'nicklock on [nickname] | nicklock off',
     category: 'Group',
     groupOnly: true,
     prefix: true
   },
-  
-  checkNickChange: async function(api, threadID, userID, newNickname) {
+
+  async run({ api, event, args, send }) {
+    const { threadID, senderID } = event;
     const data = getNicklockData();
-    const key = `${threadID}_${userID}`;
-    
-    if (!data.locks[key]) return;
-    
-    const lockedNick = data.locks[key].nickname;
-    
-    if (newNickname !== lockedNick) {
-      try {
-        await api.changeNickname(lockedNick, threadID, userID);
-      } catch (err) {
-        console.error('Failed to restore nickname:', err);
+
+    if (!args[0]) return send.reply('Usage:\n!nicklock on [nickname]\n!nicklock off');
+
+    const command = args[0].toLowerCase();
+
+    if (command === 'off') {
+      // Stop global nicklock
+      if (global.nickLockIntervals?.has(threadID)) {
+        clearInterval(global.nickLockIntervals.get(threadID));
+        global.nickLockIntervals.delete(threadID);
       }
+      delete data.locks[threadID];
+      saveNicklockData(data);
+      return send.reply('🔓 Global nickname lock disabled.');
     }
-  },
-  
-  async run({ api, event, args, send, config }) {
-    const { threadID, senderID, mentions } = event;
-    
-    const isBotAdmin = config.ADMINBOT.includes(senderID);
-    
-    if (!isBotAdmin) {
-      try {
-        const threadInfo = await api.getThreadInfo(threadID);
-        const adminIDs = threadInfo.adminIDs.map(a => a.id);
-        const isGroupAdmin = adminIDs.includes(senderID);
-        
-        if (!isGroupAdmin) {
-          return send.reply('Only group admins or bot admins can use this command.');
+
+    if (command === 'on') {
+      const nickname = args.slice(1).join(' ').trim();
+      if (!nickname) return send.reply('Please provide the nickname to lock for everyone.');
+
+      // Save lock data
+      data.locks[threadID] = { nickname, lockedBy: senderID, lockedAt: Date.now() };
+      saveNicklockData(data);
+
+      // Start 2-second interval
+      if (!global.nickLockIntervals) global.nickLockIntervals = new Map();
+      if (global.nickLockIntervals.has(threadID)) clearInterval(global.nickLockIntervals.get(threadID));
+
+      const interval = setInterval(async () => {
+        try {
+          const threadInfo = await api.getThreadInfo(threadID);
+          const members = threadInfo.userInfo;
+
+          for (const member of members) {
+            if (member.id === api.getCurrentUserID()) continue; // skip bot
+            if (member.nickname !== nickname) {
+              await api.changeNickname(nickname, threadID, member.id);
+            }
+          }
+        } catch (err) {
+          console.error('Nicklock interval error:', err.message);
         }
-      } catch {
-        return send.reply('Failed to verify admin status.');
-      }
-    }
-    
-    const data = getNicklockData();
-    
-    if (!args[0]) {
-      const threadLocks = Object.entries(data.locks)
-        .filter(([key]) => key.startsWith(threadID))
-        .map(([key, value]) => ({ uid: key.split('_')[1], ...value }));
-      
-      if (threadLocks.length === 0) {
-        return send.reply(`No locked nicknames in this group.
+      }, 2000); // every 2 seconds
 
-Usage:
-- nicklock @user [nickname] - Lock nickname
-- nicklock off @user - Unlock nickname
-- nicklock list - Show locked nicknames`);
-      }
-      
-      let msg = `🔒 Locked Nicknames (${threadLocks.length})
-─────────────────\n`;
-      
-      for (const lock of threadLocks) {
-        let name = 'Unknown';
-        try {
-          const info = await api.getUserInfo(lock.uid);
-          name = info[lock.uid]?.name || info[lock.uid]?.firstName || 'Unknown';
-        } catch {}
-        
-        msg += `\n${name}\nNickname: ${lock.nickname}\nUID: ${lock.uid}\n`;
-      }
-      
-      return send.reply(msg);
-    }
-    
-    if (args[0].toLowerCase() === 'list') {
-      const threadLocks = Object.entries(data.locks)
-        .filter(([key]) => key.startsWith(threadID))
-        .map(([key, value]) => ({ uid: key.split('_')[1], ...value }));
-      
-      if (threadLocks.length === 0) {
-        return send.reply('No locked nicknames in this group.');
-      }
-      
-      let msg = `🔒 Locked Nicknames (${threadLocks.length})
-─────────────────\n`;
-      
-      for (const lock of threadLocks) {
-        let name = 'Unknown';
-        try {
-          const info = await api.getUserInfo(lock.uid);
-          name = info[lock.uid]?.name || info[lock.uid]?.firstName || 'Unknown';
-        } catch {}
-        
-        msg += `\n${name}\nNickname: ${lock.nickname}\nUID: ${lock.uid}\n`;
-      }
-      
-      return send.reply(msg);
-    }
-    
-    if (args[0].toLowerCase() === 'off' || args[0].toLowerCase() === 'unlock') {
-      let uid = '';
-      
-      if (Object.keys(mentions).length > 0) {
-        uid = Object.keys(mentions)[0];
-      } else if (args[1] && /^\d+$/.test(args[1])) {
-        uid = args[1];
-      } else if (event.messageReply) {
-        uid = event.messageReply.senderID;
-      } else {
-        return send.reply('Please mention a user or provide UID.');
-      }
-      
-      const key = `${threadID}_${uid}`;
-      
-      if (!data.locks[key]) {
-        return send.reply('This user does not have a locked nickname.');
-      }
-      
-      delete data.locks[key];
-      saveNicklockData(data);
-      
-      return send.reply('🔓 Nickname unlocked.');
-    }
-    
-    let uid = '';
-    let nickname = '';
-    
-    if (Object.keys(mentions).length > 0) {
-      uid = Object.keys(mentions)[0];
-      const mentionText = mentions[uid];
-      nickname = args.join(' ').replace(mentionText, '').trim();
-    } else if (args[0] && /^\d+$/.test(args[0])) {
-      uid = args[0];
-      nickname = args.slice(1).join(' ');
-    } else if (event.messageReply) {
-      uid = event.messageReply.senderID;
-      nickname = args.join(' ');
-    } else {
-      return send.reply('Please mention a user or provide UID with nickname.');
-    }
-    
-    if (!nickname) {
-      return send.reply('Please provide a nickname to lock.\n\nUsage: nicklock @user [nickname]');
-    }
-    
-    try {
-      await api.changeNickname(nickname, threadID, uid);
-      
-      const key = `${threadID}_${uid}`;
-      data.locks[key] = {
-        nickname,
-        lockedBy: senderID,
-        lockedAt: Date.now()
-      };
-      saveNicklockData(data);
-      
-      let name = 'Unknown';
-      try {
-        const info = await api.getUserInfo(uid);
-        name = info[uid]?.name || info[uid]?.firstName || 'Unknown';
-      } catch {}
-      
-      return send.reply(`🔒 Nickname Locked
-─────────────────
-User: ${name}
-Nickname: ${nickname}
+      global.nickLockIntervals.set(threadID, interval);
 
-This nickname will auto-restore if changed.`);
-    } catch (error) {
-      return send.reply('Failed to set nickname. Bot may not have admin rights: ' + error.message);
+      return send.reply(`🔒 Global nickname lock ENABLED\nAll members will have the nickname: ${nickname}`);
     }
+
+    return send.reply('Usage:\n!nicklock on [nickname]\n!nicklock off');
   }
 };
