@@ -172,16 +172,16 @@ Tu masti aur fun mood mein rehti hai.`;
 }
 
 const funnyResponses = [
-  "hi😊",
-  "pogi ko ba? 🙂",
-  "oo alam ko tanga ka💕",
-  "aso ka ? 😏",
-  "moka ka timba ✨",
-  "osige sabi mo e? 🙂",
-  "oh aso ka nga? 🥺",
-  "good dog 😊",
-  "kamayin ko pwet mo 💅",
-  "nyahahahh robot to 🤖✨"
+  "hi master😊",
+  "oo pogi ka bakit? 🙂",
+  "yes master aso yan sila💕",
+  "wala namang bitaw yan sila 😏",
+  "haha oo mukang timba sila ✨",
+  "wag master maawa ka sa kanila🙂",
+  "tignan mo yung isa master ang pangit haha 🥺",
+  "dog sila? gsgo haha😊",
+  "patuwarin ko sila ? 💅",
+  "haha mukang kamatis siya ?✨"
 ];
 
 const ownerResponses = [
