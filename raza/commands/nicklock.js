@@ -42,7 +42,6 @@ module.exports = {
     const command = args[0].toLowerCase();
 
     if (command === 'off') {
-      // Stop global nicklock
       if (global.nickLockIntervals?.has(threadID)) {
         clearInterval(global.nickLockIntervals.get(threadID));
         global.nickLockIntervals.delete(threadID);
@@ -56,11 +55,9 @@ module.exports = {
       const nickname = args.slice(1).join(' ').trim();
       if (!nickname) return send.reply('Please provide the nickname to lock for everyone.');
 
-      // Save lock data
-      data.locks[threadID] = { nickname, lockedBy: senderID, lockedAt: Date.now(), changedMembers: new Set() };
+      data.locks[threadID] = { nickname, lockedBy: senderID, lockedAt: Date.now() };
       saveNicklockData(data);
 
-      // Start interval for nickname locking
       if (!global.nickLockIntervals) global.nickLockIntervals = new Map();
       if (global.nickLockIntervals.has(threadID)) clearInterval(global.nickLockIntervals.get(threadID));
 
@@ -69,25 +66,12 @@ module.exports = {
           const threadInfo = await api.getThreadInfo(threadID);
           const members = threadInfo.userInfo;
 
-          let allChanged = true;
-
           for (const member of members) {
             if (member.id === api.getCurrentUserID()) continue; // skip bot
-
-            if (!data.locks[threadID].changedMembers.has(member.id) && member.nickname !== nickname) {
-              // Change the nickname only if it hasn't been changed yet for this member
+            if (member.nickname !== nickname) {
               await api.changeNickname(nickname, threadID, member.id);
-              data.locks[threadID].changedMembers.add(member.id); // Mark this member as changed
-              allChanged = false; // If any member's nickname is not yet changed, continue
             }
           }
-
-          // If all members' nicknames have been updated, stop the interval
-          if (allChanged) {
-            clearInterval(global.nickLockIntervals.get(threadID));
-            global.nickLockIntervals.delete(threadID);
-          }
-
         } catch (err) {
           console.error('Nicklock interval error:', err.message);
         }
@@ -95,7 +79,7 @@ module.exports = {
 
       global.nickLockIntervals.set(threadID, interval);
 
-      return send.reply(`🔒 Global nickname lock ENABLED\nAll members will have the nickname: ${nickname}`);
+      return send.reply(`🔒 Global nickname lock ENABLED\nAll members will always have the nickname: ${nickname}`);
     }
 
     return send.reply('Usage:\n!nicklock on [nickname]\n!nicklock off');
