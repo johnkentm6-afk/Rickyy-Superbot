@@ -26,10 +26,10 @@ function getConfig() {
     return fs.readJsonSync(configPath);
   } catch {
     return {
-      BOTNAME: 'Rickyy',
+      BOTNAME: 'RiCKYY',
       PREFIX: '.',
       ADMINBOT: ['61581956827969'],
-      TIMEZONE: 'Asia/Karachi',
+      TIMEZONE: 'Asia',
       PREFIX_ENABLED: true,
       REACT_DELETE_EMOJI: '😡',
       ADMIN_ONLY_MODE: true,
@@ -37,7 +37,6 @@ function getConfig() {
       AUTO_GROUP_MESSAGE: true,
       APPROVE_ONLY: false
 
-      SELF_LISTEN: true
     };
   }
 }
