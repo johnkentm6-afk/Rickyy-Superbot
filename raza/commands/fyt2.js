@@ -1,94 +1,26 @@
-// 🔹 1. GLOBAL STORAGE
-const activeFYT2 = new Map(); // Global storage para sa active threads
-
 module.exports.config = {
     name: "fyt2",
     version: "1.0.0",
     hasPermssion: 2,
     credits: "... - Long LTD",
-    description: "Pakunatan",
+    description: "Rage Mode",
     commandCategory: "group",
-    usages: "fyt2 [text/off]",
+    usages: "fyt2",
     cooldowns: 10,
     dependencies: {
         "fs-extra": "",
         "axios": ""
     }
-};
+}
 
-// 🔹 2. HANDLE EVENT - AUTO STOP KAPAG NA-KICK BOT
-module.exports.handleEvent = async function ({ api, event }) {
-    if (event.logMessageType === "log:unsubscribe") {
-        if (event.logMessageData.leftParticipantFbId === api.getCurrentUserID()) {
-            const threadID = event.threadID;
-            if (activeFYT2.has(threadID)) {
-                const data = activeFYT2.get(threadID);
-                clearInterval(data.interval);
-                data.timeouts.forEach(t => clearTimeout(t));
-                activeFYT2.delete(threadID);
-                console.log(`[FYT2 AUTO-STOP] Bot removed from ${threadID}`);
-            }
-        }
-    }
-};
+module.exports.run = async function({ api, args, Users, event}) {
+  var say = args.join(" ")
+   var n = say
+  let r = 10000;
+  
 
-// 🔹 3. RUN FUNCTION
-module.exports.run = async function ({ api, args, event }) {
-    const threadID = event.threadID;
-    const r = 7000; // SPEED = 7 SECONDS
-
-    // 👉 OFF COMMAND
-    if (args[0] === "off") {
-        if (!activeFYT2.has(threadID)) {
-            return api.sendMessage("❌ FYT2 hindi naman naka-on.", threadID);
-        }
-
-        const data = activeFYT2.get(threadID);
-        clearInterval(data.interval);
-        data.timeouts.forEach(t => clearTimeout(t));
-
-        activeFYT2.delete(threadID);
-        return api.sendMessage("✅ FYT2 successfully stopped.", threadID);
-    }
-
-    // 👉 PREVENT DOUBLE START
-    if (activeFYT2.has(threadID)) {
-        return api.sendMessage("⚠️ FYT2 already running. Use `fyt2 off`.", threadID);
-    }
-
-    const n = args.join(" ");
-    const timeouts = [];
-
-    const send = (msg) => api.sendMessage(msg, threadID);
-
-    // === FIRST WAVE ===
-    send(`${n} KUTTIIAAA K PILLE K BACHHEE BSDDKK`);
-
-    for (let i = 1; i <= 40; i++) {
-        timeouts.push(
-            setTimeout(() => {
-                send(`${n} */silent ${i}`);
-            }, i * r)
-        );
-    }
-
-    // === LOOP ===
-    const interval = setInterval(() => {
-        send(`${n} KUTTIIAAA K PILLE K BACHHEE BSDDKK`);
-        for (let i = 61; i <= 100; i++) {
-            setTimeout(() => {
-                send(`${n} */silent ${i}`);
-            }, (i - 60) * r);
-        }
-    }, 72 * r);
-
-    activeFYT2.set(threadID, {
-        interval,
-        timeouts
-    });
-
-    api.sendMessage("🔥 FYT2 started\n⛔ Stop: `fyt2 off`", threadID);
-};
+ //let diff = 400;
+// for (let i = 0; i < 10; i++) {
 
   
   var a = function (a) { 
