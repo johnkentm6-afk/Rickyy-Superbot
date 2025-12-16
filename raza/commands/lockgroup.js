@@ -1,152 +1,127 @@
-const axios = require('axios');
 const fs = require('fs-extra');
-const path = require('path');
 
 module.exports = {
   config: {
     name: 'lockgroup',
-    aliases: ['lock', 'lockgc'],
-    description: 'Lock group settings (name, emoji, theme, image)',
-    usage: 'lockgroup [name/emoji/theme/image/all] [on/off]',
+    aliases: ['lock', 'lockgc', 'groupnamelock', 'nicknamelock'],
+    description: 'Lock group name or nicknames of members with auto-restore',
+    usage: 'lockgroup [groupname/nickname] [on/off]',
     category: 'Group',
     groupOnly: true,
     prefix: true
   },
-  
-  async run({ api, event, args, send, Threads, config }) {
+
+  async run({ api, event, args, send, Threads }) {
     const { threadID, senderID } = event;
-    
+
+    // Get thread info
     const threadInfo = await api.getThreadInfo(threadID);
     const adminIDs = threadInfo.adminIDs.map(a => a.id);
     const botID = api.getCurrentUserID();
-    
+
+    // Check bot admin
     if (!adminIDs.includes(botID)) {
-      return send.reply('Bot must be a group admin to lock settings.');
+      return send.reply('Bot must be an admin to lock group settings.');
     }
-    
-    const isGroupAdmin = adminIDs.includes(senderID);
-    const isBotAdmin = config.ADMINBOT.includes(senderID);
-    
-    if (!isGroupAdmin && !isBotAdmin) {
-      return send.reply('Only group admins can lock group settings.');
+
+    // Check user admin
+    if (!adminIDs.includes(senderID)) {
+      return send.reply('Only group admins can use this command.');
     }
-    
+
     const settings = Threads.getSettings(threadID);
     const target = args[0]?.toLowerCase();
     const action = args[1]?.toLowerCase();
-    
-    if (!target) {
-      return send.reply(`LOCK SETTINGS
-═══════════════════════
-Name Lock: ${settings.lockName ? 'ON' : 'OFF'}
-Emoji Lock: ${settings.lockEmoji ? 'ON' : 'OFF'}
-Theme Lock: ${settings.lockTheme ? 'ON' : 'OFF'}
-Image Lock: ${settings.lockImage ? 'ON' : 'OFF'}
-═══════════════════════
-Usage: lockgroup [name/emoji/theme/image/all] [on/off]
-
-Example:
-- lockgroup all on
-- lockgroup theme on
-- lockgroup image off`);
-    }
-    
     const enable = action === 'on' || action === 'enable' || action === 'true';
-    
-    if (target === 'name') {
-      Threads.setSettings(threadID, { 
-        lockName: enable,
-        originalName: enable ? threadInfo.threadName : null
-      });
-      return send.reply(`Name Lock: ${enable ? 'ENABLED' : 'DISABLED'}${enable ? '\n\nOriginal Name: ' + threadInfo.threadName : ''}`);
+
+    if (!target) {
+      return send.reply(`LOCK STATUS
+Name Lock: ${settings.lockGroupName ? 'ON' : 'OFF'}
+Nickname Lock: ${settings.lockNicknames ? 'ON' : 'OFF'}
+Usage: lockgroup [groupname/nickname] [on/off]`);
     }
-    
-    if (target === 'emoji') {
-      Threads.setSettings(threadID, { 
-        lockEmoji: enable,
-        originalEmoji: enable ? threadInfo.emoji : null
-      });
-      return send.reply(`Emoji Lock: ${enable ? 'ENABLED' : 'DISABLED'}${enable ? '\n\nOriginal Emoji: ' + threadInfo.emoji : ''}`);
-    }
-    
-    if (target === 'theme' || target === 'color') {
-      const currentTheme = threadInfo.color || threadInfo.threadThemeID || null;
-      Threads.setSettings(threadID, { 
-        lockTheme: enable,
-        originalTheme: enable ? currentTheme : null
-      });
-      return send.reply(`Theme Lock: ${enable ? 'ENABLED' : 'DISABLED'}${enable ? '\n\nTheme ID saved.' : ''}`);
-    }
-    
-    if (target === 'image' || target === 'photo' || target === 'pic') {
+
+    // =========================
+    // 🔹 GROUP NAME LOCK
+    // =========================
+    if (target === 'groupname') {
       if (enable) {
-        const imageUrl = threadInfo.imageSrc;
-        if (imageUrl) {
-          try {
-            const cacheDir = path.join(__dirname, '../data/lockgroup');
-            fs.ensureDirSync(cacheDir);
-            
-            const imagePath = path.join(cacheDir, `${threadID}_image.jpg`);
-            const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-            fs.writeFileSync(imagePath, Buffer.from(response.data));
-            
-            Threads.setSettings(threadID, { 
-              lockImage: true,
-              originalImagePath: imagePath
-            });
-            return send.reply('Image Lock: ENABLED\n\nGroup image saved and will be restored if changed.');
-          } catch (err) {
-            return send.reply('Failed to save group image: ' + err.message);
-          }
-        } else {
-          return send.reply('No group image found to lock.');
-        }
-      } else {
-        Threads.setSettings(threadID, { 
-          lockImage: false,
-          originalImagePath: null
+        Threads.setSettings(threadID, {
+          lockGroupName: true,
+          originalGroupName: threadInfo.threadName
         });
-        return send.reply('Image Lock: DISABLED');
+
+        send.reply(`✅ Group name lock ENABLED\nOriginal Name: ${threadInfo.threadName}`);
+
+        // Start auto-restore interval
+        if (!global.groupNameLockIntervals) global.groupNameLockIntervals = new Map();
+
+        if (global.groupNameLockIntervals.has(threadID)) clearInterval(global.groupNameLockIntervals.get(threadID));
+
+        const interval = setInterval(async () => {
+          const currentInfo = await api.getThreadInfo(threadID);
+          if (currentInfo.threadName !== settings.originalGroupName) {
+            await api.setTitle(settings.originalGroupName, threadID);
+          }
+        }, 2000); // 2 seconds
+
+        global.groupNameLockIntervals.set(threadID, interval);
+
+      } else {
+        Threads.setSettings(threadID, { lockGroupName: false, originalGroupName: null });
+        if (global.groupNameLockIntervals?.has(threadID)) {
+          clearInterval(global.groupNameLockIntervals.get(threadID));
+          global.groupNameLockIntervals.delete(threadID);
+        }
+        send.reply('❌ Group name lock DISABLED');
       }
+      return;
     }
-    
-    if (target === 'all') {
-      let imagePath = null;
-      
-      if (enable && threadInfo.imageSrc) {
-        try {
-          const cacheDir = path.join(__dirname, '../data/lockgroup');
-          fs.ensureDirSync(cacheDir);
-          
-          imagePath = path.join(cacheDir, `${threadID}_image.jpg`);
-          const response = await axios.get(threadInfo.imageSrc, { responseType: 'arraybuffer' });
-          fs.writeFileSync(imagePath, Buffer.from(response.data));
-        } catch {}
-      }
-      
-      const currentTheme = threadInfo.color || threadInfo.threadThemeID || null;
-      
-      Threads.setSettings(threadID, { 
-        lockName: enable,
-        lockEmoji: enable,
-        lockTheme: enable,
-        lockImage: enable,
-        originalName: enable ? threadInfo.threadName : null,
-        originalEmoji: enable ? threadInfo.emoji : null,
-        originalTheme: enable ? currentTheme : null,
-        originalImagePath: enable ? imagePath : null
+
+    // =========================
+    // 🔹 NICKNAME LOCK
+    // =========================
+    if (target === 'nickname') {
+      const allMembers = threadInfo.userInfo;
+      const nicknames = {};
+
+      // Save original nicknames
+      allMembers.forEach(member => {
+        if (member.nickname) nicknames[member.id] = member.nickname;
       });
-      
-      return send.reply(`ALL LOCKS: ${enable ? 'ENABLED' : 'DISABLED'}
-═══════════════════════
-Name Lock: ${enable ? 'ON' : 'OFF'}
-Emoji Lock: ${enable ? 'ON' : 'OFF'}
-Theme Lock: ${enable ? 'ON' : 'OFF'}
-Image Lock: ${enable ? 'ON' : 'OFF'}
-═══════════════════════
-${enable ? 'All original settings saved and will be restored if changed.' : ''}`);
+
+      if (enable) {
+        Threads.setSettings(threadID, { lockNicknames: true, originalNicknames: nicknames });
+        send.reply('✅ Nickname lock ENABLED\nOriginal nicknames saved.');
+
+        if (!global.nicknameLockIntervals) global.nicknameLockIntervals = new Map();
+        if (global.nicknameLockIntervals.has(threadID)) clearInterval(global.nicknameLockIntervals.get(threadID));
+
+        const interval = setInterval(async () => {
+          const currentThread = await api.getThreadInfo(threadID);
+          const savedNicknames = Threads.getSettings(threadID).originalNicknames || {};
+
+          for (const member of currentThread.userInfo) {
+            const originalNick = savedNicknames[member.id];
+            if (originalNick && member.nickname !== originalNick) {
+              await api.setNickname(originalNick, threadID, member.id);
+            }
+          }
+        }, 2000); // 2 seconds
+
+        global.nicknameLockIntervals.set(threadID, interval);
+
+      } else {
+        Threads.setSettings(threadID, { lockNicknames: false, originalNicknames: {} });
+        if (global.nicknameLockIntervals?.has(threadID)) {
+          clearInterval(global.nicknameLockIntervals.get(threadID));
+          global.nicknameLockIntervals.delete(threadID);
+        }
+        send.reply('❌ Nickname lock DISABLED');
+      }
+      return;
     }
-    
-    return send.reply('Usage: lockgroup [name/emoji/theme/image/all] [on/off]');
+
+    return send.reply('Usage: lockgroup [groupname/nickname] [on/off]');
   }
 };
