@@ -36,6 +36,8 @@ function getConfig() {
       AUTO_ISLAMIC_POST: true,
       AUTO_GROUP_MESSAGE: true,
       APPROVE_ONLY: false
+
+      SELF_LISTEN: true
     };
   }
 }
@@ -623,7 +625,7 @@ app.get('/api/status', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`RAZA BOT Control Panel running on http://0.0.0.0:${PORT}`);
+  console.log(`RICKYY BOT Control Panel running on http://0.0.0.0:${PORT}`);
   
   if (fs.existsSync(appstatePath)) {
     console.log('AppState found, starting bot...');
