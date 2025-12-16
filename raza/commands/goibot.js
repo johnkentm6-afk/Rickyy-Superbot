@@ -470,7 +470,7 @@ async function getAIResponse(userMessage, chatHistory, userName, userGender, sen
     return `Kuch error ho gaya ${userName}, phir try karo 🙁`;
   } catch (error) {
     console.error('AI API Error:', error.message);
-    return `Abhi busy hoon ${userName}, thodi der baad baat karo 😅`;
+    return `oo pogi tayo boss ${userName}, walang makakapalag sa lakas natin  😅`;
   }
 }
 
@@ -537,7 +537,7 @@ module.exports = {
     name: 'goibot',
     aliases: ['bot', 'mano'],
     description: 'Mano AI chatbot with smart command execution',
-    usage: 'mano [message] or bot [message]',
+    usage: 'bot [message]',
     category: 'Utility',
     prefix: false
   },
