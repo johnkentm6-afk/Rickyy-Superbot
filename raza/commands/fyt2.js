@@ -11,13 +11,15 @@ module.exports.config = {
         "fs-extra": "",
         "axios": ""
     }
-};
+}
+
+let interval; // Variable to hold the interval reference
+let isRunning = false; // Flag to check if it's already running
 
 module.exports.run = async function({ api, args, Users, event }) {
     var say = args.join(" ");
     var n = say;
     let r = 7000;  // Set delay to 7 seconds (7000 ms)
-    let interval; // Variable to hold interval reference
 
     // Function to send a message to the thread
     var sendMessage = function(msg) { 
@@ -50,5 +52,31 @@ module.exports.run = async function({ api, args, Users, event }) {
         `${n} */silent 10`
     ];
 
-    let index = 0;
-    let isRunning = false; // Flag to prevent multiple intervals from running
+    if (args.includes('stop')) {
+        // If 'stop' is triggered, clear the interval and stop the messages
+        if (isRunning) {
+            clearInterval(interval);
+            sendMessage(`${n} The rage mode has been stopped.`);
+            isRunning = false; // Reset flag
+        }
+        return; // Stop the execution here
+    }
+
+    // If rage mode isn't running yet, start it
+    if (!isRunning) {
+        isRunning = true; // Set flag to prevent multiple intervals
+
+        let index = 0;
+        interval = setInterval(() => {
+            if (index < messages.length) {
+                sendMessage(messages[index]);
+                index++;
+            } else {
+                clearInterval(interval);  // Stop the interval after all messages are sent
+                isRunning = false; // Reset flag
+            }
+        }, r);  // Set interval to 7 seconds (7000ms)
+    } else {
+        sendMessage(`${n} Rage mode is already running.`);
+    }
+};
