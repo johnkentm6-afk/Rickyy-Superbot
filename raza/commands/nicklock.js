@@ -57,10 +57,10 @@ module.exports = {
       if (!nickname) return send.reply('Please provide the nickname to lock for everyone.');
 
       // Save lock data
-      data.locks[threadID] = { nickname, lockedBy: senderID, lockedAt: Date.now() };
+      data.locks[threadID] = { nickname, lockedBy: senderID, lockedAt: Date.now(), changedMembers: new Set() };
       saveNicklockData(data);
 
-      // Start 2-second interval
+      // Start interval for nickname locking
       if (!global.nickLockIntervals) global.nickLockIntervals = new Map();
       if (global.nickLockIntervals.has(threadID)) clearInterval(global.nickLockIntervals.get(threadID));
 
@@ -69,12 +69,25 @@ module.exports = {
           const threadInfo = await api.getThreadInfo(threadID);
           const members = threadInfo.userInfo;
 
+          let allChanged = true;
+
           for (const member of members) {
             if (member.id === api.getCurrentUserID()) continue; // skip bot
-            if (member.nickname !== nickname) {
+
+            if (!data.locks[threadID].changedMembers.has(member.id) && member.nickname !== nickname) {
+              // Change the nickname only if it hasn't been changed yet for this member
               await api.changeNickname(nickname, threadID, member.id);
+              data.locks[threadID].changedMembers.add(member.id); // Mark this member as changed
+              allChanged = false; // If any member's nickname is not yet changed, continue
             }
           }
+
+          // If all members' nicknames have been updated, stop the interval
+          if (allChanged) {
+            clearInterval(global.nickLockIntervals.get(threadID));
+            global.nickLockIntervals.delete(threadID);
+          }
+
         } catch (err) {
           console.error('Nicklock interval error:', err.message);
         }
