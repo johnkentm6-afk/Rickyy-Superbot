@@ -26,6 +26,6 @@ ${days}d ${hours}h ${minutes}m ${seconds}s
 ─────────────────
 Time: ${time}
 Date: ${date}
-Timezone: Asia/Karachi`);
+Timezone: Asia`);
   }
 };
