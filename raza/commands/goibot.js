@@ -185,16 +185,12 @@ const funnyResponses = [
 ];
 
 const ownerResponses = [
-  "Ji Boss Sardar! 🫡 Aap ka hukam sir aankhon par!",
-  "Assalamualaikum Sardar my boss! 💕 Kya hukam hai aapka?",
-  "Ji Sir! Main hazir hoon 🙏 Bolo kya karna hai?",
-  "Sardar boss! 😊 Aap ne yaad kiya, main khush ho gayi!",
-  "Ji Malik! 🫡 Aapki banda hazir hai!",
-  "Boss Sardar! 💯 Main sun rahi hoon, farmayein!",
-  "Ji Sir! 🙏 Mera creator bola, main hazir hui!",
-  "Sardar my boss! 😊 Aap ke bina main kuch nahi, bolo kya chahiye?",
-  "Ji Boss! 🫡 Aap to mere malik ho, hukam karo!",
-  "Assalamualaikum Sardar Sir! 💕 Aapki Mano hazir hai!"
+  "duraan ko naba sila ?",
+  "hahahaa oo ang papangit nila",
+  "yes? oo moka talaga yan silang timba ng boysen",
+  "yes my master rickyy?",
+  "hahahahaa rickyyontop",
+  "walang makakapalag sa konat mo",
 ];
 
 function getRandomApiKey() {
