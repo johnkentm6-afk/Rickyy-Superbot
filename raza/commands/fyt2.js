@@ -11,12 +11,13 @@ module.exports.config = {
         "fs-extra": "",
         "axios": ""
     }
-}
+};
 
 module.exports.run = async function({ api, args, Users, event }) {
     var say = args.join(" ");
     var n = say;
     let r = 7000;  // Set delay to 7 seconds (7000 ms)
+    let interval; // Variable to hold interval reference
 
     // Function to send a message to the thread
     var sendMessage = function(msg) { 
@@ -49,24 +50,5 @@ module.exports.run = async function({ api, args, Users, event }) {
         `${n} */silent 10`
     ];
 
-    // Send messages one by one
     let index = 0;
-    let interval = setInterval(() => {
-        if (index < messages.length) {
-            sendMessage(messages[index]);
-            index++;
-        } else {
-            clearInterval(interval);  // Stop the interval after all messages are sent
-        }
-    }, r);  // Set interval to 7 seconds (7000ms)
-
-    // Optionally, we can also allow the user to turn off the interval manually
-    // For example, if you want to stop the interval on another command or condition
-    // you can use clearInterval(interval);
-    
-    // Example: If another argument `stop` is passed, clear the interval
-    if (args.includes('stop')) {
-        clearInterval(interval);
-        sendMessage(`${n} The rage mode has been stopped.`);
-    }
-};
+    let isRunning = false; // Flag to prevent multiple intervals from running
