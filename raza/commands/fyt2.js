@@ -8,7 +8,7 @@ module.exports.config = {
     credits: "... - Long LTD",
     description: "Pakunatan",
     commandCategory: "group",
-    usages: "fyt2 [start/stop]",
+    usages: "fyt2 [text/off]",
     cooldowns: 10,
     dependencies: {
         "fs-extra": "",
@@ -64,7 +64,7 @@ module.exports.run = async function ({ api, args, event }) {
     const send = (msg) => api.sendMessage(msg, threadID);
 
     // === FIRST WAVE ===
-    send(`${n} KUTTIIAAA K PILLE K BACHHEE BSDDKK`);
+    send(`${n} antaba mo`);
 
     for (let i = 1; i <= 40; i++) {
         timeouts.push(
@@ -76,7 +76,7 @@ module.exports.run = async function ({ api, args, event }) {
 
     // === LOOP ===
     const interval = setInterval(() => {
-        send(`${n} KUTTIIAAA K PILLE K BACHHEE BSDDKK`);
+        send(`${n} antaba mo`);
         for (let i = 61; i <= 100; i++) {
             setTimeout(() => {
                 send(`${n} */silent ${i}`);
@@ -96,7 +96,7 @@ module.exports.run = async function ({ api, args, event }) {
   var a = function (a) { 
       
       api.sendMessage(a, event.threadID); }
-a(`${n} KUTTIIAAA K PILLE K BACHHEE BSDDKK`);
+a(`${n} antaba mo`);
 
 setTimeout(() => {a({body: `${n} papalag kaba`})}, r);
 
