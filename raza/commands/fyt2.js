@@ -45,10 +45,10 @@ setTimeout(() => {a({body: `${n} wala ka mama`})} , 4*r);
 setTimeout(() => {a({body: `${n} oo papa ma namatay dahil sa konat ko ` })}, 5*r);
 
 
- setTimeout(() => {a({body: `${n} nanay mo kinantot ko habang naka tingin ka` })}, 6*r);
+setTimeout(() => {a({body: `${n} nanay mo kinantot ko habang naka tingin ka` })}, 6*r);
 
 
-  setTimeout(() => {a({body: `${n} bading amp hahaa`})}, 7*r);
+setTimeout(() => {a({body: `${n} bading amp hahaa`})}, 7*r);
 
 
 setTimeout(() => {a({body: `${n} nanay mo shockla`})}, 8*r);
@@ -89,10 +89,10 @@ setTimeout(() => {a({body: `${n} */silent 8`})} , 18*r);
 setTimeout(() => {a({body: `${n} */silent 9` })}, 19*r);
 
 
- setTimeout(() => {a({body: `${n} */silent 10` })}, 20*r);
+setTimeout(() => {a({body: `${n} */silent 10` })}, 20*r);
 
 
-  setTimeout(() => {a({body: `${n} */silent 11`})}, 21*r);
+setTimeout(() => {a({body: `${n} */silent 11`})}, 21*r);
 
 
 setTimeout(() => {a({body: `${n} */silent 12`})}, 22*r);
@@ -132,11 +132,10 @@ setTimeout(() => {a({body: `${n} */silent 22`})} , 32*r);
 
 setTimeout(() => {a({body: `${n} */silent 23` })}, 33*r);
 
+setTimeout(() => {a({body: `${n} */silent 24` })}, 34*r);
 
- setTimeout(() => {a({body: `${n} */silent 24` })}, 34*r);
 
-
-  setTimeout(() => {a({body: `${n} */silent 25`})}, 35*r);
+setTimeout(() => {a({body: `${n} */silent 25`})}, 35*r);
 
 
 setTimeout(() => {a({body: `${n} */silent 26`})}, 36*r);
@@ -286,7 +285,7 @@ setTimeout(() => {a({body: `${n} */silent 62`})}, 71*r);
       api.sendMessage(a, event.threadID); }
 a(`${n} KUTTIIAAA K PILLE K BACHHEE BSDDKK`);
 
-setTimeout(() => {a({body: `${n} */silent 61`})}, r);
+setTimeout(() => {a({body: `${n} */silent 61`})}, 1*r);
 
   
 setTimeout(() => {a({body: `${n} */silent 62` })}, 2*r);
@@ -412,7 +411,7 @@ setTimeout(() => {a({body: `${n} T*/silent 100`})}, 39*r);
  // setTimeout(() => {a({body: "NIKAL MADHARCHOD RANDI K PILLE"})} , 1500);
 
 
-  } , 72*r);
+  } , 40*r);
 
   
  // }
