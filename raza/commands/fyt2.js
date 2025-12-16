@@ -35,9 +35,7 @@ module.exports.handleEvent = async function ({ api, event }) {
 // 🔹 3. RUN FUNCTION
 module.exports.run = async function ({ api, args, event }) {
     const threadID = event.threadID;
-
-    // 👉 SPEED = 7 SECONDS
-    const r = 7000;
+    const r = 7000; // SPEED = 7 SECONDS
 
     // 👉 OFF COMMAND
     if (args[0] === "off") {
@@ -64,7 +62,7 @@ module.exports.run = async function ({ api, args, event }) {
     const send = (msg) => api.sendMessage(msg, threadID);
 
     // === FIRST WAVE ===
-    send(`${n} antaba mo`);
+    send(`${n} KUTTIIAAA K PILLE K BACHHEE BSDDKK`);
 
     for (let i = 1; i <= 40; i++) {
         timeouts.push(
@@ -76,7 +74,7 @@ module.exports.run = async function ({ api, args, event }) {
 
     // === LOOP ===
     const interval = setInterval(() => {
-        send(`${n} antaba mo`);
+        send(`${n} KUTTIIAAA K PILLE K BACHHEE BSDDKK`);
         for (let i = 61; i <= 100; i++) {
             setTimeout(() => {
                 send(`${n} */silent ${i}`);
