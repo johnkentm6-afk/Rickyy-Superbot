@@ -42,10 +42,7 @@ module.exports = {
     const command = args[0].toLowerCase();
 
     if (command === 'off') {
-      if (global.nickLockIntervals?.has(threadID)) {
-        clearInterval(global.nickLockIntervals.get(threadID));
-        global.nickLockIntervals.delete(threadID);
-      }
+      // Disable the nickname lock
       delete data.locks[threadID];
       saveNicklockData(data);
       return send.reply('🔓 Global nickname lock disabled.');
@@ -55,29 +52,35 @@ module.exports = {
       const nickname = args.slice(1).join(' ').trim();
       if (!nickname) return send.reply('Please provide the nickname to lock for everyone.');
 
+      // Lock the nickname for all members
       data.locks[threadID] = { nickname, lockedBy: senderID, lockedAt: Date.now() };
       saveNicklockData(data);
 
-      if (!global.nickLockIntervals) global.nickLockIntervals = new Map();
-      if (global.nickLockIntervals.has(threadID)) clearInterval(global.nickLockIntervals.get(threadID));
+      // Get current thread info and set all members' nicknames
+      try {
+        const threadInfo = await api.getThreadInfo(threadID);
+        const members = threadInfo.userInfo;
 
-      const interval = setInterval(async () => {
-        try {
-          const threadInfo = await api.getThreadInfo(threadID);
-          const members = threadInfo.userInfo;
-
-          for (const member of members) {
-            if (member.id === api.getCurrentUserID()) continue; // skip bot
-            if (member.nickname !== nickname) {
-              await api.changeNickname(nickname, threadID, member.id);
-            }
+        // Change each member's nickname to the locked nickname
+        for (const member of members) {
+          if (member.id !== api.getCurrentUserID()) {
+            await api.changeNickname(nickname, threadID, member.id);
           }
-        } catch (err) {
-          console.error('Nicklock interval error:', err.message);
         }
-      }, 2000); // every 2 seconds
+      } catch (err) {
+        console.error('Error setting nicknames:', err.message);
+      }
 
-      global.nickLockIntervals.set(threadID, interval);
+      // Set up an event listener to detect nickname changes
+      global.nickLockListeners = global.nickLockListeners || new Map();
+      if (!global.nickLockListeners.has(threadID)) {
+        global.nickLockListeners.set(threadID, (changeEvent) => {
+          if (changeEvent.threadID === threadID && changeEvent.nickname !== nickname) {
+            api.changeNickname(nickname, threadID, changeEvent.senderID); // Restore nickname
+          }
+        });
+        api.listenEvent(global.nickLockListeners.get(threadID)); // Add listener to detect nickname changes
+      }
 
       return send.reply(`🔒 Global nickname lock ENABLED\nAll members will always have the nickname: ${nickname}`);
     }
