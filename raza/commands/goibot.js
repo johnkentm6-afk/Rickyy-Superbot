@@ -172,16 +172,16 @@ Tu masti aur fun mood mein rehti hai.`;
 }
 
 const funnyResponses = [
-  "Haan ji, bolo kya haal hai? 😊",
-  "Kya scene hai yaar? 🙂",
-  "Haan main hoon, bolo 💕",
-  "Kya chahiye tumhe? 😏",
-  "Bolo bolo, sun rahi hoon ✨",
-  "Haan ji, kya baat hai? 🙂",
-  "Mujhe kyun yaad kiya? 🥺",
-  "Acha, bolo kya baat hai 😊",
-  "Main busy thi thodi, ab bolo 💅",
-  "Haan ji, Mano bol rahi hai 🤖✨"
+  "hi😊",
+  "pogi ko ba? 🙂",
+  "oo alam ko tanga ka💕",
+  "aso ka ? 😏",
+  "moka ka timba ✨",
+  "osige sabi mo e? 🙂",
+  "oh aso ka nga? 🥺",
+  "good dog 😊",
+  "kamayin ko pwet mo 💅",
+  "nyahahahh robot to 🤖✨"
 ];
 
 const ownerResponses = [
