@@ -3,7 +3,7 @@ module.exports.config = {
     version: "1.0.0",
     hasPermssion: 2,
     credits: "... - Long LTD",
-    description: "War nát cái boxchat",
+    description: "Pakunatan",
     commandCategory: "group",
     usages: "fyt2",
     cooldowns: 10,
@@ -16,7 +16,7 @@ module.exports.config = {
 module.exports.run = async function({ api, args, Users, event}) {
   var say = args.join(" ")
    var n = say
-  let r = 600;
+  let r = 5000;
   
 
  //let diff = 400;
