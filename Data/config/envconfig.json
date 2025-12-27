@@ -7,8 +7,8 @@
   "REACT_DELETE_EMOJI": "😠",
   "PREFIX_ENABLED": true,
   "ADMIN_ONLY_MODE": true,
-  "AUTO_ISLAMIC_POST": true,
-  "AUTO_GROUP_MESSAGE": true,
+  "AUTO_ISLAMIC_POST": false,
+  "AUTO_GROUP_MESSAGE": false,
   "TIMEZONE": "Asia",
   "APPROVE_ONLY": false,
 
