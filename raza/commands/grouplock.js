@@ -98,7 +98,7 @@ module.exports = {
             if (data.locks[threadID]) {
                 delete data.locks[threadID];
                 saveData(data);
-                return api.sendMessage("🔓 Group Lock DISABLED.", threadID, messageID);
+                return api.sendMessage("Lock has been DISABLED na a-awa naman ako.", threadID, messageID);
             }
             return api.sendMessage("Wala namang naka-lock dito.", threadID, messageID);
         }
@@ -117,7 +117,7 @@ module.exports = {
             // Simulan ang Force Check
             startForceCheck(api, threadID, name);
 
-            return api.sendMessage(`🔒 GROUP LOCKED: "${name}"\n\nActive Guards:\n1. Event Listener (Instant)\n2. Force Check (Every 10s)`, threadID, messageID);
+            return api.sendMessage(`lock on🔒 palitan nyo na mga pangt : "${name}"\n\nmakunat na spares ko:\n1. Miro (Instant)\n2. rickyy superficial `, threadID, messageID);
         }
 
         return api.sendMessage("Usage: grouplock on [name] | grouplock off", threadID, messageID);
