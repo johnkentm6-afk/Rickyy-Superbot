@@ -1,12 +1,28 @@
 const fs = require('fs-extra');
 const path = require('path');
 
-// Siguraduhin na ang path ay papunta sa "Data" folder na nakita ko sa screenshot mo
-const groupLockPath = path.join(__dirname, '../Data/grouplock.json');
+// Gagamit tayo ng path.resolve para mas sigurado ang lokasyon sa Render
+const groupLockPath = path.resolve(__dirname, '..', 'Data', 'grouplock.json');
 
 function getData() {
-    if (!fs.existsSync(groupLockPath)) fs.writeJsonSync(groupLockPath, { locks: {} });
-    return fs.readJsonSync(groupLockPath);
+    try {
+        // Siguraduhin na gawa na ang folder at file bago basahin
+        fs.ensureFileSync(groupLockPath);
+        
+        const content = fs.readFileSync(groupLockPath, 'utf8');
+        if (!content) {
+            fs.writeJsonSync(groupLockPath, { locks: {} });
+            return { locks: {} };
+        }
+        return JSON.parse(content);
+    } catch (error) {
+        console.error("Error sa pagbasa ng Data:", error);
+        return { locks: {} };
+    }
+}
+
+function saveData(data) {
+    fs.writeJsonSync(groupLockPath, data, { spaces: 2 });
 }
 
 module.exports = {
@@ -21,42 +37,53 @@ module.exports = {
         countdown: 5
     },
 
-    // Ito ang taga-bantay
     async handleEvent({ api, event }) {
         const { threadID, logMessageType, logMessageData } = event;
         const data = getData();
 
-        if (data.locks[threadID] && logMessageType === "log:thread-name") {
+        if (data.locks && data.locks[threadID] && logMessageType === "log:thread-name") {
             const lockedName = data.locks[threadID].name;
             if (logMessageData.name !== lockedName) {
-                return api.setTitle(lockedName, threadID, (err) => {
-                    if (!err) api.setMessageReaction("🛡️", event.messageID);
-                });
+                // 2 seconds delay gaya ng request mo
+                setTimeout(async () => {
+                    try {
+                        await api.setTitle(lockedName, threadID);
+                        await api.setMessageReaction("🛡️", event.messageID);
+                    } catch (err) {
+                        console.error("Auto-revert error:", err);
+                    }
+                }, 2000);
             }
         }
     },
 
     async run({ api, event, args }) {
-        const { threadID, senderID } = event;
+        const { threadID, messageID } = event;
         let data = getData();
 
         if (args[0] === "off") {
+            if (!data.locks[threadID]) return api.sendMessage("Walang active na lock dito.", threadID, messageID);
             delete data.locks[threadID];
-            fs.writeJsonSync(groupLockPath, data);
-            return api.sendMessage("🔓 Group name lock disabled.", threadID);
+            saveData(data);
+            return api.sendMessage("🔓 Group name lock disabled.", threadID, messageID);
         }
 
         if (args[0] === "on") {
             const name = args.slice(1).join(" ");
-            if (!name) return api.sendMessage("Pakilagay ang pangalan.", threadID);
+            if (!name) return api.sendMessage("Pakilagay ang pangalan na i-l-lock.", threadID, messageID);
 
             data.locks[threadID] = { name: name };
-            fs.writeJsonSync(groupLockPath, data);
+            saveData(data);
 
-            await api.setTitle(name, threadID);
-            return api.sendMessage(`🔒 Group name locked to: ${name}`, threadID);
+            try {
+                await api.setTitle(name, threadID);
+                await api.setMessageReaction("✅", messageID);
+                return api.sendMessage(`🔒 Group name locked to: ${name}`, threadID, messageID);
+            } catch (err) {
+                return api.sendMessage("Error sa pag-set ng pangalan: " + err.message, threadID, messageID);
+            }
         }
 
-        return api.sendMessage("Usage: grouplock on [name] | off", threadID);
+        return api.sendMessage("Usage: grouplock on [name] | off", threadID, messageID);
     }
 };
