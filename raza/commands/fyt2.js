@@ -1,82 +1,86 @@
 module.exports.config = {
     name: "fyt2",
-    version: "1.0.0",
-    hasPermission: 2,
+    version: "1.1.0",
+    role: 2, // Mapapansin mo pinalitan ko ng 'role' base sa standard ng raza engine mo
     credits: "... - Long LTD",
-    description: "Rage Mode",
+    description: "Rage Mode with Auto-Reaction",
     commandCategory: "group",
-    usages: "fyt2",
-    cooldowns: 10,
-    dependencies: {
-        "fs-extra": "",
-        "axios": ""
+    usages: "fyt2 [pangalan] | fyt2 stop",
+    cooldowns: 10
+};
+
+// Ginagamit ang 'global' para hindi mag-reset ang timer at status
+if (!global.rageModeTimers) global.rageModeTimers = new Map();
+
+module.exports.run = async function({ api, args, event }) {
+    const { threadID, messageID } = event;
+    const say = args.join(" ");
+    
+    // Check kung 'stop' ang command
+    if (args[0] === "stop") {
+        if (global.rageModeTimers.has(threadID)) {
+            clearInterval(global.rageModeTimers.get(threadID));
+            global.rageModeTimers.delete(threadID);
+            return api.sendMessage("🛑 Rage mode has been stopped.", threadID, messageID);
+        } else {
+            return api.sendMessage("Walang active na rage mode sa thread na ito.", threadID, messageID);
+        }
     }
-}
 
-let interval; // Variable to hold the interval reference
-let isRunning = false; // Flag to check if it's already running
+    if (!say) return api.sendMessage("Sino ang raratratin ko? (Usage: fyt2 [name])", threadID, messageID);
 
-module.exports.run = async function({ api, args, Users, event }) {
-    var say = args.join(" ");
-    var n = say;
-    let r = 7000;  // Set delay to 7 seconds (7000 ms)
+    // Kung tumatakbo na sa thread na ito, huwag nang ulitin
+    if (global.rageModeTimers.has(threadID)) {
+        return api.sendMessage("Rage mode is already running in this thread.", threadID, messageID);
+    }
 
-    // Function to send a message to the thread
-    var sendMessage = function(msg) { 
-        api.sendMessage(msg, event.threadID); 
-    };
-
-    // List of messages to be sent
+    let r = 10000; // 10 seconds delay para safe sa spam
     let messages = [
-        `${n} antaba mo`,
-        `${n} papalag kaba`,
-        `${n} batokbatokan kita`,
-        `${n} taba mo`,
-        `${n} wala ka mama`,
-        `${n} oo papa ma namatay dahil sa konat ko`,
-        `${n} nanay mo kinantot ko habang naka tingin ka`,
-        `${n} bading amp hahaa`,
-        `${n} nanay mo shockla`,
-        `${n} bading ka nga?`,
-        `${n} gooding🤣🤣🤣`,
-        `${n} hwhahahahaa`,
-        `${n} */silent 1`,
-        `${n} */silent 2`,
-        `${n} */silent 3`,
-        `${n} */silent 4`,
-        `${n} */silent 5`,
-        `${n} */silent 6`,
-        `${n} */silent 7`,
-        `${n} */silent 8`,
-        `${n} */silent 9`,
-        `${n} */silent 10`
+        `${say} antaba mo`,
+        `${say} papalag kaba`,
+        `${say} batokbatokan kita`,
+        `${say} taba mo`,
+        `${say} wala ka mama`,
+        `${say} oo papa ma namatay dahil sa konat ko`,
+        `${say} nanay mo kinantot ko habang naka tingin ka`,
+        `${say} bading amp hahaa`,
+        `${say} nanay mo shockla`,
+        `${say} bading ka nga?`,
+        `${say} gooding🤣🤣🤣`,
+        `${say} hwhahahahaa`,
+        `${say} */silent 1`,
+        `${say} */silent 2`,
+        `${say} */silent 3`,
+        `${say} */silent 4`,
+        `${say} */silent 5`,
+        `${say} */silent 6`,
+        `${say} */silent 7`,
+        `${say} */silent 8`,
+        `${say} */silent 9`,
+        `${say} */silent 10`
     ];
 
-    if (args.includes('stop')) {
-        // If 'stop' is triggered, clear the interval and stop the messages
-        if (isRunning) {
-            clearInterval(interval);
-            sendMessage(`${n} The rage mode has been stopped.`);
-            isRunning = false; // Reset flag
+    api.sendMessage(`🔥 Rage Mode Activated for "${say}"\nDelay: 10s per message.`, threadID);
+
+    let index = 0;
+    const interval = setInterval(async () => {
+        if (index < messages.length) {
+            // I-send ang message at kunin ang info para sa reaction
+            api.sendMessage(messages[index], threadID, (err, info) => {
+                if (!err) {
+                    // Auto reaction (😆)
+                    api.setMessageReaction("😆", info.messageID, () => {}, true);
+                }
+            });
+            index++;
+        } else {
+            // Kapag tapos na ang listahan, itigil na ang timer
+            clearInterval(global.rageModeTimers.get(threadID));
+            global.rageModeTimers.delete(threadID);
+            api.sendMessage(`✅ Finished rattling ${say}.`, threadID);
         }
-        return; // Stop the execution here
-    }
+    }, r);
 
-    // If rage mode isn't running yet, start it
-    if (!isRunning) {
-        isRunning = true; // Set flag to prevent multiple intervals
-
-        let index = 0;
-        interval = setInterval(() => {
-            if (index < messages.length) {
-                sendMessage(messages[index]);
-                index++;
-            } else {
-                clearInterval(interval);  // Stop the interval after all messages are sent
-                isRunning = false; // Reset flag
-            }
-        }, r);  // Set interval to 7 seconds (7000ms)
-    } else {
-        sendMessage(`${n} Rage mode is already running.`);
-    }
+    // I-save ang interval reference sa global map
+    global.rageModeTimers.set(threadID, interval);
 };
