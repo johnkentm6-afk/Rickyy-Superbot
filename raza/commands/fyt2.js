@@ -6,7 +6,7 @@ module.exports.config = {
     description: "Rage Mode with Auto-Reaction",
     commandCategory: "group",
     usages: "fyt2 [pangalan] | fyt2 stop",
-    cooldowns: 10
+    cooldowns: 15
 };
 
 // Ginagamit ang 'global' para hindi mag-reset ang timer at status
@@ -21,20 +21,20 @@ module.exports.run = async function({ api, args, event }) {
         if (global.rageModeTimers.has(threadID)) {
             clearInterval(global.rageModeTimers.get(threadID));
             global.rageModeTimers.delete(threadID);
-            return api.sendMessage("🛑 Rage mode has been stopped.", threadID, messageID);
+            return api.sendMessage("pause muna kawawa kana masyado sabi ng boss kong si rickyy.", threadID, messageID);
         } else {
-            return api.sendMessage("Walang active na rage mode sa thread na ito.", threadID, messageID);
+            return api.sendMessage("walang active na rage mode sa thread na ito.", threadID, messageID);
         }
     }
 
-    if (!say) return api.sendMessage("Sino ang raratratin ko? (Usage: fyt2 [name])", threadID, messageID);
+    if (!say) return api.sendMessage("sino ang raratratin ko? (Usage: fyt2 [name])", threadID, messageID);
 
     // Kung tumatakbo na sa thread na ito, huwag nang ulitin
     if (global.rageModeTimers.has(threadID)) {
         return api.sendMessage("Rage mode is already running in this thread.", threadID, messageID);
     }
 
-    let r = 10000; // 10 seconds delay para safe sa spam
+    let r = 15000; // 10 seconds delay para safe sa spam
     let messages = [
         `${say} antaba mo`,
         `${say} papalag kaba`,
@@ -60,7 +60,7 @@ module.exports.run = async function({ api, args, event }) {
         `${say} */silent 10`
     ];
 
-    api.sendMessage(`🔥 Rage Mode Activated for "${say}"\nDelay: 10s per message.`, threadID);
+    api.sendMessage(`copy bubugbogin ko na'to "${say}"\nDelay: none hahaha🥷🏻.`, threadID);
 
     let index = 0;
     const interval = setInterval(async () => {
