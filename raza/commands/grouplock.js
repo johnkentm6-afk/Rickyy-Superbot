@@ -50,7 +50,7 @@ module.exports = {
         name: "grouplock",
         aliases: ["glock"],
         version: "3.0.0",
-        role: 0, // 0 = All users, 1 = Admin only
+        role: 2, // 0 = All users, 1 = Admin only
         author: "Gemini",
         description: "Hybrid Lock: Events + Force Interval",
         category: "Group",
