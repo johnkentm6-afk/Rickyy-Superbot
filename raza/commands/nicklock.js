@@ -1,9 +1,8 @@
 const fs = require('fs-extra');
 const path = require('path');
 
+// Path papunta sa database
 const lockPath = path.resolve(__dirname, '..', '..', 'Data', 'nicklock.json');
-
-if (!global.nickLockTimers) global.nickLockTimers = new Map();
 
 function getData() {
     try {
@@ -16,110 +15,96 @@ function saveData(data) {
     fs.writeJsonSync(lockPath, data, { spaces: 2 });
 }
 
-// 🛡️ FORCE CHECK NICKNAMES
-function startNickCheck(api, threadID, lockedNick) {
-    if (global.nickLockTimers.has(threadID)) clearInterval(global.nickLockTimers.get(threadID));
-
-    const interval = setInterval(async () => {
-        try {
-            const info = await api.getThreadInfo(threadID);
-            const myID = api.getCurrentUserID();
-
-            // Check lahat ng members
-            info.userInfo.forEach(async (user) => {
-                // Wag pakialaman ang sarili (bot) para di mag-error
-                if (user.id === myID) return;
-
-                if (user.nickname !== lockedNick) {
-                    await api.changeNickname(lockedNick, threadID, user.id);
-                }
-            });
-        } catch (e) { }
-    }, 20000); // Check every 20 seconds (Para iwas ban)
-
-    global.nickLockTimers.set(threadID, interval);
-}
-
 module.exports = {
     config: {
         name: "nicklock",
         aliases: ["nlock"],
-        version: "3.0.0",
-        role: 1, // Mas maganda kung Admin lang gagamit nito
+        version: "4.0.0", // Reactive Version
+        role: 1, // Admin only recommended
         author: "Gemini",
-        description: "Hybrid Nickname Lock",
+        description: "Locks nickname. Reacts only when changed.",
         category: "Group",
         guide: "{pn} on [name] | off"
     },
 
-    // 1. RESUME AFTER RESTART
-    onLoad({ api }) {
-        const data = getData();
-        if (data.locks) {
-            Object.keys(data.locks).forEach(threadID => {
-                startNickCheck(api, threadID, data.locks[threadID].nickname);
-            });
-        }
-    },
-
-    // 2. INSTANT EVENT LISTENER
+    // 🛡️ DITO ANG FINAL DEFENSE (REACTIVE)
+    // Gagana lang ito kapag may NAGPALIT ng nickname
     async handleEvent({ api, event }) {
         const { threadID, logMessageType, logMessageData } = event;
         const data = getData();
 
+        // Check kung:
+        // 1. May lock data sa GC na ito
+        // 2. Ang event ay tungkol sa pagpapalit ng nickname
         if (data.locks && data.locks[threadID] && logMessageType === "log:subscribe-nickname") {
+            
             const lockedNick = data.locks[threadID].nickname;
-            const targetID = logMessageData.participant_id;
+            const targetID = logMessageData.participant_id; // Kung sino ang pinalitan
+            const newNick = logMessageData.nickname; // Ano ang pinalit
 
-            if (logMessageData.nickname !== lockedNick) {
-                // Wait 1 sec then revert
-                setTimeout(() => {
-                    api.changeNickname(lockedNick, threadID, targetID, (err) => {
-                        if (!err) api.setMessageReaction("👍", event.messageID, () => {});
-                    });
+            // Kung ang pinalit na nickname ay HINDI tugma sa naka-lock
+            if (newNick !== lockedNick) {
+                console.log(`[NICKLOCK] Detected change for ${targetID}. Reverting...`);
+                
+                // Maghintay ng 1 segundo bago ibalik (para di mag-overlap)
+                setTimeout(async () => {
+                    try {
+                        // Ibalik ang nickname ng SPECIFIC na tao na 'yun lang
+                        await api.changeNickname(lockedNick, threadID, targetID);
+                        
+                        // React 👍 para alam mong gumana
+                        api.setMessageReaction("👍", event.messageID, () => {});
+                    } catch (err) {
+                        console.error("[NICKLOCK ERROR]", err);
+                    }
                 }, 1000);
             }
         }
     },
 
-    // 3. MAIN COMMAND
     async run({ api, event, args }) {
         const { threadID, messageID, senderID } = event;
         const data = getData();
 
         if (args[0] === "off") {
-            if (global.nickLockTimers.has(threadID)) {
-                clearInterval(global.nickLockTimers.get(threadID));
-                global.nickLockTimers.delete(threadID);
-            }
             if (data.locks[threadID]) {
                 delete data.locks[threadID];
                 saveData(data);
-                return api.sendMessage("🔓 Nickname Lock DISABLED.", threadID, messageID);
+                return api.sendMessage("🔓 Nickname Lock DISABLED. Malaya na silang magpalit.", threadID, messageID);
             }
-            return api.sendMessage("Wala namang naka-lock.", threadID, messageID);
+            return api.sendMessage("Wala namang naka-lock na nickname dito.", threadID, messageID);
         }
 
         if (args[0] === "on") {
             const nickname = args.slice(1).join(" ");
             if (!nickname) return api.sendMessage("Anong nickname ang i-l-lock?", threadID, messageID);
 
+            // I-save ang lock info
             data.locks[threadID] = { nickname, lockedBy: senderID };
             saveData(data);
 
-            // Initial Mass Change
-            api.sendMessage("⏳ Locking nicknames...", threadID);
-            const info = await api.getThreadInfo(threadID);
-            for (const user of info.userInfo) {
-                if (user.id !== api.getCurrentUserID()) {
-                    await api.changeNickname(nickname, threadID, user.id);
-                    await new Promise(r => setTimeout(r, 500)); // Delay para di spam
-                }
-            }
+            api.sendMessage(`🔒 NICKLOCK ENABLED.\n\nTarget: "${nickname}"\nStatus: Applying to all members one time...`, threadID);
 
-            // Start Force Check
-            startNickCheck(api, threadID, nickname);
-            return api.sendMessage(`🔒 ALL NICKNAMES LOCKED TO: "${nickname}"`, threadID, messageID);
+            // 1. INITIAL MASS CHANGE (Isang beses lang gagawin)
+            try {
+                const info = await api.getThreadInfo(threadID);
+                const myID = api.getCurrentUserID();
+
+                // I-loop lahat ng member para i-set ang initial name
+                for (const user of info.userInfo) {
+                    // Wag galawin ang sarili (Bot) o kung tama na ang nickname
+                    if (user.id === myID || user.nickname === nickname) continue;
+
+                    await api.changeNickname(nickname, threadID, user.id);
+                    // Maliit na delay para hindi ma-block ni Facebook (anti-spam)
+                    await new Promise(r => setTimeout(r, 500)); 
+                }
+
+                return api.sendMessage(`✅ Tapos na! Lahat ay "${nickname}" na.\n\nNgayon, babantayan ko na lang kung may magtatangkang magpalit.`, threadID, messageID);
+            
+            } catch (err) {
+                return api.sendMessage("May error sa pagpapalit ng nickname. Siguraduhing hindi restricted ang bot.", threadID, messageID);
+            }
         }
 
         return api.sendMessage("Usage: nicklock on [name] | off", threadID, messageID);
