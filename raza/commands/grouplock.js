@@ -1,42 +1,75 @@
 const fs = require('fs-extra');
 const path = require('path');
 
-// Gagamit tayo ng path.resolve para mas sigurado ang lokasyon sa Render
-const groupLockPath = path.resolve(__dirname, '..', 'Data', 'grouplock.json');
+// Siguraduhin na tama ang path papunta sa Data folder mo
+const lockPath = path.resolve(__dirname, '..', '..', 'Data', 'grouplock.json');
+
+// Global variable para sa mga timers
+if (!global.groupLockTimers) global.groupLockTimers = new Map();
 
 function getData() {
     try {
-        // Siguraduhin na gawa na ang folder at file bago basahin
-        fs.ensureFileSync(groupLockPath);
-        
-        const content = fs.readFileSync(groupLockPath, 'utf8');
-        if (!content) {
-            fs.writeJsonSync(groupLockPath, { locks: {} });
-            return { locks: {} };
-        }
-        return JSON.parse(content);
-    } catch (error) {
-        console.error("Error sa pagbasa ng Data:", error);
+        fs.ensureFileSync(lockPath);
+        const data = fs.readJsonSync(lockPath, { throws: false });
+        return data || { locks: {} };
+    } catch {
+        fs.writeJsonSync(lockPath, { locks: {} });
         return { locks: {} };
     }
 }
 
 function saveData(data) {
-    fs.writeJsonSync(groupLockPath, data, { spaces: 2 });
+    fs.writeJsonSync(lockPath, data, { spaces: 2 });
+}
+
+// 🛡️ FORCE CHECK FUNCTION (Interval)
+function startForceCheck(api, threadID, lockedName) {
+    // Patayin muna kung may existing timer para hindi mag-doble
+    if (global.groupLockTimers.has(threadID)) {
+        clearInterval(global.groupLockTimers.get(threadID));
+    }
+
+    const interval = setInterval(async () => {
+        try {
+            const info = await api.getThreadInfo(threadID);
+            // Kapag mali ang pangalan, ibalik agad
+            if (info.threadName !== lockedName) {
+                await api.setTitle(lockedName, threadID);
+                console.log(`[FORCE-LOCK] Reverted group name in ${threadID}`);
+            }
+        } catch (err) {
+            // Tahimik lang pag error para di mag-spam sa logs
+        }
+    }, 10000); // Check every 10 seconds (Safe sa rate limit)
+
+    global.groupLockTimers.set(threadID, interval);
 }
 
 module.exports = {
     config: {
         name: "grouplock",
-        version: "1.0.0",
-        role: 0,
+        aliases: ["glock"],
+        version: "3.0.0",
+        role: 0, // 0 = All users, 1 = Admin only
         author: "Gemini",
-        description: "Lock group name permanently",
+        description: "Hybrid Lock: Events + Force Interval",
         category: "Group",
-        guide: "{pn} on [name] | off",
-        countdown: 5
+        guide: "{pn} on [name] | off"
     },
 
+    // 1. AUTO-START PAGKA-LOAD NG BOT
+    onLoad({ api }) {
+        const data = getData();
+        if (data.locks) {
+            Object.keys(data.locks).forEach(threadID => {
+                const name = data.locks[threadID].name;
+                startForceCheck(api, threadID, name);
+                console.log(`[GROUPLOCK] Resumed protection for Thread: ${threadID}`);
+            });
+        }
+    },
+
+    // 2. INSTANT REACTION (Event Listener)
     async handleEvent({ api, event }) {
         const { threadID, logMessageType, logMessageData } = event;
         const data = getData();
@@ -44,46 +77,49 @@ module.exports = {
         if (data.locks && data.locks[threadID] && logMessageType === "log:thread-name") {
             const lockedName = data.locks[threadID].name;
             if (logMessageData.name !== lockedName) {
-                // 2 seconds delay gaya ng request mo
-                setTimeout(async () => {
-                    try {
-                        await api.setTitle(lockedName, threadID);
-                        await api.setMessageReaction("🛡️", event.messageID);
-                    } catch (err) {
-                        console.error("Auto-revert error:", err);
-                    }
-                }, 2000);
+                // Instant revert (Event based)
+                api.setTitle(lockedName, threadID, (err) => {
+                    if (!err) api.setMessageReaction("🛡️", event.messageID, () => {});
+                });
             }
         }
     },
 
+    // 3. COMMAND CONTROLS
     async run({ api, event, args }) {
         const { threadID, messageID } = event;
-        let data = getData();
+        const data = getData();
 
         if (args[0] === "off") {
-            if (!data.locks[threadID]) return api.sendMessage("Walang active na lock dito.", threadID, messageID);
-            delete data.locks[threadID];
-            saveData(data);
-            return api.sendMessage("🔓 Group name lock disabled.", threadID, messageID);
+            if (global.groupLockTimers.has(threadID)) {
+                clearInterval(global.groupLockTimers.get(threadID));
+                global.groupLockTimers.delete(threadID);
+            }
+            if (data.locks[threadID]) {
+                delete data.locks[threadID];
+                saveData(data);
+                return api.sendMessage("🔓 Group Lock DISABLED.", threadID, messageID);
+            }
+            return api.sendMessage("Wala namang naka-lock dito.", threadID, messageID);
         }
 
         if (args[0] === "on") {
             const name = args.slice(1).join(" ");
-            if (!name) return api.sendMessage("Pakilagay ang pangalan na i-l-lock.", threadID, messageID);
+            if (!name) return api.sendMessage("Anong pangalan ang i-l-lock ko?", threadID, messageID);
 
+            // Save sa database
             data.locks[threadID] = { name: name };
             saveData(data);
 
-            try {
-                await api.setTitle(name, threadID);
-                await api.setMessageReaction("✅", messageID);
-                return api.sendMessage(`🔒 Group name locked to: ${name}`, threadID, messageID);
-            } catch (err) {
-                return api.sendMessage("Error sa pag-set ng pangalan: " + err.message, threadID, messageID);
-            }
+            // Set Title Agad
+            await api.setTitle(name, threadID);
+
+            // Simulan ang Force Check
+            startForceCheck(api, threadID, name);
+
+            return api.sendMessage(`🔒 GROUP LOCKED: "${name}"\n\nActive Guards:\n1. Event Listener (Instant)\n2. Force Check (Every 10s)`, threadID, messageID);
         }
 
-        return api.sendMessage("Usage: grouplock on [name] | off", threadID, messageID);
+        return api.sendMessage("Usage: grouplock on [name] | grouplock off", threadID, messageID);
     }
 };
