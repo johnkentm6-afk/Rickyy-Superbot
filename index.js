@@ -33,8 +33,8 @@ function getConfig() {
       PREFIX_ENABLED: true,
       REACT_DELETE_EMOJI: '😡',
       ADMIN_ONLY_MODE: true,
-      AUTO_ISLAMIC_POST: true,
-      AUTO_GROUP_MESSAGE: true,
+      AUTO_ISLAMIC_POST: false,
+      AUTO_GROUP_MESSAGE: false,
       APPROVE_ONLY: false
 
     };
