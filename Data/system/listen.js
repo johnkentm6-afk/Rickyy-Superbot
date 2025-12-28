@@ -30,6 +30,14 @@ function listen({ api, client, Users, Threads, Currencies, config }) {
       switch (event.type) {
         case 'message':
         case 'message_reply':
+          // 🛡️ SECURITY GATE: 
+          // Kung ang message ay nagsisimula sa prefix pero HINDI ikaw ang sender, dedma ang bot.
+          if (event.body && event.body.startsWith(config.PREFIX)) {
+            if (!config.ADMINBOT.includes(event.senderID)) {
+              return; // Walang reply, walang notification, hinto agad dito.
+            }
+          }
+
           if (resendModule && resendModule.logMessage) {
             try {
               const botID = api.getCurrentUserID();
