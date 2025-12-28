@@ -39,7 +39,7 @@ module.exports.run = async function({ api, args, event }) {
         `${say} batokbatokan kita`,
         `${say} taba mo`,
         `${say} wala ka mama`,
-        `${say} oo papa ma namatay dahil sa konat ko`,
+        `${say} oo papa mo namatay dahil sa konat ko`,
         `${say} nanay mo kinantot ko habang naka tingin ka`,
         `${say} bading amp hahaa`,
         `${say} nanay mo shockla`,
@@ -58,7 +58,7 @@ module.exports.run = async function({ api, args, event }) {
         `${say} */silent 10`
     ];
 
-    api.sendMessage(`copy bubugbogin ko na'to "${say}"\nLoop mode: Activated 🥷🏻.`, threadID);
+    api.sendMessage(`copy bubugbogin ko na'to "${say}"\nno mercy hahaha 🥷🏻.`, threadID);
 
     let index = 0;
     const interval = setInterval(async () => {
