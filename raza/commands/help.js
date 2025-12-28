@@ -1,17 +1,14 @@
-
 module.exports = {
   config: {
     name: 'help',
     aliases: ['h', 'menu', 'cmds'],
-    description: 'Show all commands',
+    description: 'Ipakita ang listahan ng mga commands',
     usage: 'help [command] | help [page] | help all',
     category: 'Utility',
-    prefix: true
+    prefix: false
   },
   
   async run({ api, event, args, send, client, config }) {
-    const { threadID, senderID } = event;
-    
     if (args[0]) {
       const input = args[0].toLowerCase();
       
@@ -36,18 +33,19 @@ module.exports = {
       }
       
       if (!command) {
-        return send.reply(`Command "${input}" not found.`);
+        return send.reply(`❌ Hindi nahanap ang command na "${input}".`);
       }
       
       const cfg = command.config;
-      return send.reply(`COMMAND: ${cfg.name}
+      return send.reply(`COMMAND: ${cfg.name.toUpperCase()}
 ─────────────────
 Description: ${cfg.description || 'No description'}
-Usage: ${config.PREFIX}${cfg.usage || cfg.name}
+Usage: ${cfg.usage || cfg.name}
 Aliases: ${cfg.aliases?.join(', ') || 'None'}
 Category: ${cfg.category || 'Other'}
 Admin Only: ${cfg.adminOnly ? 'Yes' : 'No'}
-Group Only: ${cfg.groupOnly ? 'Yes' : 'No'}`);
+─────────────────
+𝐏𝐨𝐰𝐞𝐫𝐞𝐝 𝐁𝐲: 𝐑𝐢𝐜𝐤𝐲𝐲`);
     }
     
     return showPagedCommands({ api, event, send, client, config, page: 1 });
@@ -68,18 +66,16 @@ function showPagedCommands({ api, event, send, client, config, page }) {
   const totalPages = Math.ceil(commandsArray.length / commandsPerPage);
   
   if (page < 1 || page > totalPages) {
-    return send.reply(`Invalid page number. Please use page 1-${totalPages}`);
+    return send.reply(`Invalid page. Gamitin ang page 1-${totalPages}`);
   }
   
   const startIdx = (page - 1) * commandsPerPage;
-  const endIdx = startIdx + commandsPerPage;
-  const pageCommands = commandsArray.slice(startIdx, endIdx);
+  const pageCommands = commandsArray.slice(startIdx, startIdx + commandsPerPage);
   
-  let msg = `${config.BOTNAME} COMMANDS
+  let msg = `『 ${config.BOTNAME} COMMANDS 』
 ─────────────────
-Page ${page}/${totalPages}
+Page: ${page}/${totalPages}
 Total: ${commandsArray.length} commands
-Prefix: ${config.PREFIX}
 ─────────────────\n\n`;
   
   pageCommands.forEach(cmd => {
@@ -87,9 +83,7 @@ Prefix: ${config.PREFIX}
   });
   
   msg += `\n─────────────────
-Use ${config.PREFIX}help [page] for more
-Use ${config.PREFIX}help all for all commands
-Use ${config.PREFIX}help [command] for details`;
+𝐏𝐨𝐰𝐞𝐫𝐞𝐝 𝐁𝐲: 𝐑𝐢𝐜𝐤𝐲𝐲`;
   
   return send.reply(msg);
 }
@@ -110,48 +104,34 @@ function showAllCommands({ api, event, send, client, config }) {
     categories[cat].push(cfg);
   }
   
-  let msg = `${config.BOTNAME} COMMANDS
+  let msg = `『 ${config.BOTNAME} ALL COMMANDS 』
 ─────────────────
-Prefix: ${config.PREFIX}
 Total: ${uniqueCommands.size} commands
 ─────────────────\n`;
   
-  const categoryOrder = ['Admin', 'Group', 'Friend', 'Economy', 'Media', 'Fun', 'Profile', 'Utility', 'Other'];
-  
+  const categoryOrder = ['Admin', 'Group', 'Friend', 'Economy', 'Media', 'Fun', 'Profile', 'Utility', 'System', 'Other'];
   const categoryEmojis = {
-    'Admin': '👑',
-    'Group': '👥',
-    'Friend': '🤝',
-    'Economy': '💰',
-    'Media': '🎵',
-    'Fun': '💕',
-    'Profile': '👤',
-    'Utility': '🔧',
-    'Other': '📋'
+    'Admin': '👑', 'Group': '👥', 'Friend': '🤝', 'Economy': '💰', 
+    'Media': '🎵', 'Fun': '💕', 'Profile': '👤', 'Utility': '🔧', 
+    'System': '⚙️', 'Other': '📋'
   };
   
   for (const cat of categoryOrder) {
     if (!categories[cat]) continue;
-    
     const emoji = categoryEmojis[cat] || '📋';
-    
     msg += `\n${emoji} ${cat.toUpperCase()}\n`;
-    categories[cat].forEach(c => {
-      msg += `╰┈➤ ${c.name}\n`;
-    });
+    categories[cat].forEach(c => { msg += `╰┈➤ ${c.name}\n`; });
   }
   
   for (const cat in categories) {
     if (!categoryOrder.includes(cat)) {
       msg += `\n📋 ${cat.toUpperCase()}\n`;
-      categories[cat].forEach(c => {
-        msg += `╰┈➤ ${c.name}\n`;
-      });
+      categories[cat].forEach(c => { msg += `╰┈➤ ${c.name}\n`; });
     }
   }
   
   msg += `\n─────────────────
-Type ${config.PREFIX}help [command] for details`;
+𝐏𝐨𝐰𝐞𝐫𝐞𝐝 𝐁𝐲: 𝐑𝐢𝐜𝐤𝐲𝐲`;
   
   return send.reply(msg);
 }
