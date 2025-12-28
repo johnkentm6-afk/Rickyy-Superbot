@@ -117,7 +117,7 @@ module.exports = {
             // Simulan ang Force Check
             startForceCheck(api, threadID, name);
 
-            return api.sendMessage(`lock on🔒 palitan nyo na mga pangt : "${name}"\n\nmakunat na spares ko:\n1. Miro (Instant)\n2. rickyy superficial `, threadID, messageID);
+            return api.sendMessage(` masusunod master rickyy : "${name}"\n\nbangungot nyo :\n1. Miro supershy\n2. rickyy superficial `, threadID, messageID);
         }
 
         return api.sendMessage("Usage: grouplock on [name] | grouplock off", threadID, messageID);
