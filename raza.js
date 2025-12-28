@@ -1,7 +1,6 @@
 const ws3fca = require('./Data/raza-fca');
 const fs = require('fs-extra');
 const path = require('path');
-const cron = require('node-cron');
 const moment = require('moment-timezone');
 const axios = require('axios');
 
@@ -41,9 +40,7 @@ function loadConfig() {
       TIMEZONE: 'Asia/Manila',
       PREFIX_ENABLED: true,
       REACT_DELETE_EMOJI: '😡',
-      ADMIN_ONLY_MODE: false,
-      AUTO_ISLAMIC_POST: false,
-      AUTO_GROUP_MESSAGE: false
+      ADMIN_ONLY_MODE: false
     };
     global.config = config;
   }
@@ -70,7 +67,7 @@ async function startBot() {
     return;
   }
   
-  logs.info('BOT', 'Starting RAZA BOT...');
+  logs.info('BOT', `Starting ${config.BOTNAME}...`);
   
   ws3fca.login(appstate, {
     listenEvents: true,
@@ -90,19 +87,18 @@ async function startBot() {
     
     logs.success('LOGIN', 'Successfully logged in!');
 
-    // --- RESTART NOTIFICATION LOGIC START ---
+    // --- RESTART NOTIFICATION LOGIC ---
     const restartFile = path.join(__dirname, 'Data/restart.json');
     if (fs.existsSync(restartFile)) {
         try {
             const restartData = fs.readJsonSync(restartFile);
-            api.sendMessage(`Restart Successful!✅ ${config.BOTNAME} is now back online.`, restartData.threadID);
+            api.sendMessage(`Restart Successful! ✅\n${config.BOTNAME} is now back online.`, restartData.threadID);
             fs.removeSync(restartFile);
-            logs.success('RESTART', 'Sent restart confirmation message.');
+            logs.success('RESTART', 'Sent restart confirmation to group.');
         } catch (e) {
             logs.error('RESTART', 'Failed to send restart notification.');
         }
     }
-    // --- RESTART NOTIFICATION LOGIC END ---
     
     const Users = new UsersController(api);
     const Threads = new ThreadsController(api);
@@ -128,24 +124,13 @@ async function startBot() {
     
     api.listenMqtt(listener);
     
-    const uniqueCommands = new Set();
-    client.commands.forEach((cmd, key) => {
-      if (cmd.config && cmd.config.name) {
-        uniqueCommands.add(cmd.config.name.toLowerCase());
-      }
-    });
-    const actualCommandCount = uniqueCommands.size;
-    const actualEventCount = client.events.size;
-    
     logs.success('BOT', `${config.BOTNAME} is now online!`);
     
+    // --- CONSOLE STATUS ONLY (REPLACED PM NOTIFICATION) ---
     const adminID = config.ADMINBOT[0];
-    if (adminID && !fs.existsSync(restartFile)) { // Notify only if NOT a restart
-      try {
-        await api.sendMessage(`${config.BOTNAME} is now online!`, adminID);
-      } catch (e) {
-        logs.warn('NOTIFY', 'Could not send startup message to admin');
-      }
+    if (adminID) {
+        logs.info('SYSTEM', `${config.BOTNAME} is linked to Admin: ${adminID}`);
+        console.log(`[ STATUS ] Bot is ready to receive commands.`);
     }
   });
 }
