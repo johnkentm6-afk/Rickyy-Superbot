@@ -61,7 +61,7 @@ module.exports = {
 
       writer.on("finish", () => {
         api.sendMessage({
-          body: `🗣️ Voice Message:`,
+          body: `your wish is my command boss rickyy:`,
           attachment: fs.createReadStream(tmpPath)
         }, threadID, () => {
           if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
