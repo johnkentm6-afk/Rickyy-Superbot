@@ -18,10 +18,10 @@ module.exports = {
     config: {
         name: "nicklock",
         aliases: ["nlock"],
-        version: "4.6.0",
+        version: "4.7.0",
         role: 1, 
         author: "Gemini",
-        description: "Locks all members to a specific nickname and reverts changes.",
+        description: "Locks all members to a specific nickname and strictly reverts changes.",
         category: "Group",
         guide: "{pn} on [name] | off"
     },
@@ -29,23 +29,22 @@ module.exports = {
     async handleEvent({ api, event }) {
         const { threadID, logMessageType, logMessageData } = event;
         
-        // FIX: Idinagdag ang 'log:user-nickname' dahil ito ang lumalabas sa logs mo
-        if (logMessageType === "log:subscribe-nickname" || logMessageType === "log:user-nickname") {
+        // Kinukuha ang log:user-nickname base sa Render logs mo
+        if (logMessageType === "log:user-nickname" || logMessageType === "log:subscribe-nickname") {
             const data = getData();
             if (!data.locks || !data.locks[threadID]) return;
 
             const lockedNick = data.locks[threadID].nickname;
-            
-            // Kunin ang ID ng tao (iba ang format depende sa log type)
-            const targetID = logMessageData.participant_id || logMessageData.targetID; 
+            const targetID = logMessageData.participant_id; // Ang ID ng taong binago ang nick
 
-            // Kung ang bagong nickname ay hindi "pogi" (o kung ano man ang ni-lock mo)
+            // TRICK: Force revert kung ang bagong nickname ay hindi eksaktong kapareho ng lock name
             if (logMessageData.nickname !== lockedNick) {
+                // Maikling delay para hindi mag-loop ang bot sa sarili niyang action
                 setTimeout(() => {
                     api.changeNickname(lockedNick, threadID, targetID, (err) => {
-                        if (err) console.log(`[Nicklock] Error: Hindi maibalik. Check if bot is Admin.`);
+                        if (err) console.log(`[Nicklock] Failed to revert for ${targetID}. Bot might not be admin.`);
                     });
-                }, 1000); // 1 second delay para iwas spam block
+                }, 1500); 
             }
         }
     },
@@ -73,13 +72,14 @@ module.exports = {
                 const threadInfo = await api.getThreadInfo(threadID);
                 const participantIDs = threadInfo.participantIDs;
 
+                // Sync nicknames of all members
                 for (let userID of participantIDs) {
                     api.changeNickname(nickname, threadID, userID);
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(resolve => setTimeout(resolve, 700)); // Delay para iwas spam
                 }
-                return api.sendMessage("✅ All nicknames locked.", threadID);
+                return api.sendMessage("✅ All nicknames are now locked.", threadID);
             } catch (error) {
-                return api.sendMessage("❌ Error syncing. Make sure I am Admin.", threadID, messageID);
+                return api.sendMessage("❌ Error during sync. Ensure I am a Group Admin.", threadID, messageID);
             }
         }
     }
