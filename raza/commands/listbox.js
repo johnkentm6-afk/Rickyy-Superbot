@@ -72,7 +72,7 @@ module.exports = {
       // I-sort mula pinaka-maraming members
       listthread.sort((a, b) => b.count - a.count);
 
-      let msg = '📋 LISTAHAN NG MGA GC NA NASA LOOB ANG BOT:\n\n';
+      let msg = '📋 LISTAHAN NG MGA BATA MO SIR:\n\n';
       let groupid = [];
       let i = 1;
 
@@ -84,7 +84,7 @@ module.exports = {
 
       if (groupid.length === 0) return api.sendMessage("Wala pang sinalihang group chat ang bot.", threadID, messageID);
 
-      return api.sendMessage(msg + '💡 Mag-reply ng "out [number]" o "ban [number]" para paalisin ang bot sa GC na iyon.', threadID, (err, info) => {
+      return api.sendMessage(msg + '𝐏𝐨𝐰𝐞𝐫𝐞𝐝 𝐁𝐲: 𝐑𝐢𝐜𝐤𝐲𝐲.', threadID, (err, info) => {
         if (client.replies) {
           client.replies.set(info.messageID, {
             commandName: 'listbox',
