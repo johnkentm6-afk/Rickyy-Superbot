@@ -27,9 +27,9 @@ module.exports = {
             if (global.attackTimers.has(threadID)) {
                 clearInterval(global.attackTimers.get(threadID));
                 global.attackTimers.delete(threadID);
-                return api.sendMessage("𝗣𝗮𝘂𝘀𝗲 𝗺𝘂𝗻𝗮, 𝗸𝗮𝘄𝗮𝘄𝗮 𝗸𝗮 𝗻𝗮 𝗺𝗮𝘀𝘆𝗮𝗱𝗼 𝘀𝗮𝗯𝗶 𝗻𝗴 𝗯𝗼𝘀𝘀 𝗸𝗼𝗻𝗴 𝘀𝗶 𝗥𝗶𝗰𝗸𝘆𝘆. ✅", threadID, messageID);
+                return api.sendMessage("𝗣𝗮𝘂𝘀𝗲 𝗺𝘂𝗻𝗮, 𝗸𝗮𝘄𝗮𝘄𝗮 𝗸𝗮 𝗻𝗮 𝗺𝗮𝘀𝘆𝗮𝗱𝗼 𝘀𝗮𝗯𝗶 𝗻𝗴 𝗯𝗼𝘀𝘀 𝗸𝗼𝗻𝗴 𝘀𝗶 𝗥𝗶𝗰𝗸𝘆𝘆.", threadID, messageID);
             } else {
-                return api.sendMessage("𝗪𝗮𝗹𝗮𝗻𝗴 𝗮𝗰𝘁𝗶𝘃𝗲 𝗻𝗮 𝗮𝘁𝘁𝗮𝗰𝗸 𝗺𝗼𝗱𝗲 𝘀𝗮 𝘁𝗵𝗿𝗲𝗮𝗱 𝗻𝗮 𝗶𝘁𝗼.", threadID, messageID);
+                return api.sendMessage("buti nalang pinatay mo sir nakakaawa na", threadID, messageID);
             }
         }
 
@@ -58,7 +58,7 @@ module.exports = {
 
             if (pambaraList.length === 0) return api.sendMessage("❌ Walang laman ang gali.txt mo.", threadID, messageID);
 
-            api.sendMessage(`𝗖𝗼𝗽𝘆! 𝗔𝘁𝘁𝗮𝗰𝗸𝗶𝗻𝗴: "${targetName}" 👊\n𝗡𝗼 𝗺𝗲𝗿𝗰𝘆 𝗵𝗮𝗵𝗮𝗵𝗮 🥷🏻.`, threadID);
+            api.sendMessage(`tatagal ba sakin yan si "${targetName}" 👊\n sir rickyy? hindi makakatulog sakin yan 🥷🏻.`, threadID);
 
             let index = 0;
             let delay = 15000; // 15 seconds delay
