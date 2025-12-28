@@ -18,10 +18,10 @@ module.exports = {
     config: {
         name: "nicklock",
         aliases: ["nlock"],
-        version: "4.7.0",
+        version: "4.9.0",
         role: 1, 
         author: "Gemini",
-        description: "Locks all members to a specific nickname and strictly reverts changes.",
+        description: "Reverts nickname changes. (Note: Can only revert others if Bot is Admin)",
         category: "Group",
         guide: "{pn} on [name] | off"
     },
@@ -29,22 +29,29 @@ module.exports = {
     async handleEvent({ api, event }) {
         const { threadID, logMessageType, logMessageData } = event;
         
-        // Kinukuha ang log:user-nickname base sa Render logs mo
         if (logMessageType === "log:user-nickname" || logMessageType === "log:subscribe-nickname") {
             const data = getData();
             if (!data.locks || !data.locks[threadID]) return;
 
             const lockedNick = data.locks[threadID].nickname;
-            const targetID = logMessageData.participant_id; // Ang ID ng taong binago ang nick
+            const targetID = logMessageData.participant_id; 
+            const newNick = logMessageData.nickname;
+            const botID = api.getCurrentUserID();
 
-            // TRICK: Force revert kung ang bagong nickname ay hindi eksaktong kapareho ng lock name
-            if (logMessageData.nickname !== lockedNick) {
-                // Maikling delay para hindi mag-loop ang bot sa sarili niyang action
+            if (newNick !== lockedNick) {
+                // Kung ang bot ang pinalitan ang nickname, ibabalik niya agad (Kahit hindi Admin)
+                if (targetID === botID) {
+                    return api.changeNickname(lockedNick, threadID, botID);
+                }
+
+                // Kung ibang member ang pinalitan, susubukan niyang ibalik (Gagana lang kung Admin siya)
                 setTimeout(() => {
                     api.changeNickname(lockedNick, threadID, targetID, (err) => {
-                        if (err) console.log(`[Nicklock] Failed to revert for ${targetID}. Bot might not be admin.`);
+                        if (err && targetID !== botID) {
+                            console.log(`[Nicklock] Cannot revert ${targetID}: Bot is not Admin.`);
+                        }
                     });
-                }, 1500); 
+                }, 1500);
             }
         }
     },
@@ -56,7 +63,7 @@ module.exports = {
         if (args[0] === "off") {
             delete data.locks[threadID];
             saveData(data);
-            return api.sendMessage("🔓 Nickname lock is now DISABLED.", threadID, messageID);
+            return api.sendMessage("🔓 Nicklock OFF.", threadID, messageID);
         }
 
         if (args[0] === "on") {
@@ -66,21 +73,22 @@ module.exports = {
             data.locks[threadID] = { nickname };
             saveData(data);
 
-            api.sendMessage(`🛡️ Nicklock ENABLED: Syncing all members to "${nickname}"...`, threadID);
+            // Susubukan palitan ang lahat (Mag-eerror sa log ang mga hindi bot kung hindi Admin)
+            api.sendMessage(`🛡️ Nicklock ON: Synchronizing to "${nickname}"...`, threadID);
 
             try {
                 const threadInfo = await api.getThreadInfo(threadID);
                 const participantIDs = threadInfo.participantIDs;
 
-                // Sync nicknames of all members
                 for (let userID of participantIDs) {
                     api.changeNickname(nickname, threadID, userID);
-                    await new Promise(resolve => setTimeout(resolve, 700)); // Delay para iwas spam
+                    await new Promise(r => setTimeout(r, 500)); 
                 }
-                return api.sendMessage("✅ All nicknames are now locked.", threadID);
-            } catch (error) {
-                return api.sendMessage("❌ Error during sync. Ensure I am a Group Admin.", threadID, messageID);
+            } catch (e) {
+                // Kung hindi makuha ang thread info, palitan na lang ang sarili
+                api.changeNickname(nickname, threadID, api.getCurrentUserID());
             }
+            return api.sendMessage("✅ Nicklock activated. (Bot will strictly protect its own name; others require Admin status)", threadID);
         }
     }
 };
