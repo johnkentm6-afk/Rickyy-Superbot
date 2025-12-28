@@ -30,12 +30,15 @@ function listen({ api, client, Users, Threads, Currencies, config }) {
       switch (event.type) {
         case 'message':
         case 'message_reply': {
-          // 🛡️ STRICT ADMIN FILTER:
+          const body = event.body ? event.body.toLowerCase() : "";
           const isAdmin = config.ADMINBOT.includes(event.senderID);
           const hasPrefix = event.body && event.body.startsWith(config.PREFIX);
-          const isBotKeyword = event.body && event.body.toLowerCase() === "bot";
+          
+          // Idinagdag ang mga keywords mo dito: "pst" at "batako"
+          const isBotKeyword = body === "bot" || body === "pst" || body === "batako";
 
-          // Kung hindi admin at nag-try mag-command, stop dito.
+          // 🛡️ SILENT ADMIN FILTER:
+          // Kung hindi admin at ginamit ang prefix o keywords, hihinto ang bot nang walang sinasabi.
           if (!isAdmin && (hasPrefix || isBotKeyword)) {
              return; 
           }
@@ -82,7 +85,6 @@ function listen({ api, client, Users, Threads, Currencies, config }) {
           break;
           
         case 'event':
-          // Dito dadaan ang welcome at nicklock events
           await handleEvent({
             api, event, client, Users, Threads, config
           });
