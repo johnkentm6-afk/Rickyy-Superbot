@@ -14,6 +14,14 @@ module.exports = {
   },
   
   async run({ api, event, send, config }) {
+    const restartFile = path.join(process.cwd(), 'Data/restart.json');
+    
+    // I-save ang threadID para alam ng bot kung saan mag-re-reply pagka-gising
+    await fs.writeJson(restartFile, { 
+      threadID: event.threadID, 
+      messageID: event.messageID 
+    });
+
     await send.reply(`🔄 ${config.BOTNAME} is restarting...`);
     
     setTimeout(() => {
@@ -31,7 +39,6 @@ module.exports = {
       });
       
       child.unref();
-      
       process.exit(0);
     }, 2000);
   }
