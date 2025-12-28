@@ -31,30 +31,31 @@ function listen({ api, client, Users, Threads, Currencies, config }) {
         case 'message':
         case 'message_reply': {
           const body = event.body ? event.body.toLowerCase() : "";
-          const isAdmin = config.ADMINBOT.includes(event.senderID);
-          const hasPrefix = event.body && event.body.startsWith(config.PREFIX);
+          const botID = api.getCurrentUserID();
           
-          // Idinagdag ang mga keywords mo dito: "pst" at "batako"
+          // 🛡️ SELF LISTEN & ADMIN CHECK:
+          // Papayagan ang message kung ang sender ay ADMIN o ang BOT mismo.
+          const isAdmin = config.ADMINBOT.includes(event.senderID) || event.senderID === botID;
+          
+          const hasPrefix = event.body && event.body.startsWith(config.PREFIX);
           const isBotKeyword = body === "bot" || body === "pst" || body === "batako";
 
-          // 🛡️ SILENT ADMIN FILTER:
-          // Kung hindi admin at ginamit ang prefix o keywords, hihinto ang bot nang walang sinasabi.
+          // SILENT ADMIN FILTER:
+          // Kung hindi admin/bot at nag-prefix o nag-keyword, hihinto dito.
           if (!isAdmin && (hasPrefix || isBotKeyword)) {
              return; 
           }
 
           if (resendModule && resendModule.logMessage) {
             try {
-              const botID = api.getCurrentUserID();
-              if (event.senderID !== botID) {
-                await resendModule.logMessage(
-                  event.messageID,
-                  event.body,
-                  event.attachments,
-                  event.senderID,
-                  event.threadID
-                );
-              }
+              // Inalis ang filter na 'event.senderID !== botID' para ma-log din ang sariling chat
+              await resendModule.logMessage(
+                event.messageID,
+                event.body,
+                event.attachments,
+                event.senderID,
+                event.threadID
+              );
             } catch (e) {}
           }
           
