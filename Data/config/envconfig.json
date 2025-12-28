@@ -5,7 +5,7 @@
     "61581956827969"
   ],
   "REACT_DELETE_EMOJI": "😠",
-  "PREFIX_ENABLED": true,
+  "PREFIX_ENABLED": false,
   "ADMIN_ONLY_MODE": true,
   "AUTO_ISLAMIC_POST": false,
   "AUTO_GROUP_MESSAGE": false,
