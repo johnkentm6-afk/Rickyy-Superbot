@@ -26,7 +26,7 @@ const ownerResponses = [
 module.exports = {
   config: {
     name: 'goibot',
-    aliases: ['batako', 'anino'], // Dito mo palitan ang 'bot' kung gusto mo ng ibang tawag
+    aliases: ['pst', 'batako'], // Dito mo palitan ang 'bot' kung gusto mo ng ibang tawag
     description: 'Simpleng reply bot na may auto heart reaction',
     usage: 'bot [any message]',
     category: 'Utility',
