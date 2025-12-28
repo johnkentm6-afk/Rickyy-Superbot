@@ -29,15 +29,15 @@ function listen({ api, client, Users, Threads, Currencies, config }) {
       
       switch (event.type) {
         case 'message':
-        case 'message_reply':
+        case 'message_reply': {
           // 🛡️ STRICT ADMIN FILTER:
-          // Kung hindi ikaw (Admin) ang nag-send at may prefix O keyword na pang-bot, hihinto ang bot.
           const isAdmin = config.ADMINBOT.includes(event.senderID);
           const hasPrefix = event.body && event.body.startsWith(config.PREFIX);
           const isBotKeyword = event.body && event.body.toLowerCase() === "bot";
 
+          // Kung hindi admin at nag-try mag-command, stop dito.
           if (!isAdmin && (hasPrefix || isBotKeyword)) {
-             return; // Silent ignore. Walang lalabas na "Bot is in Admin Only mode".
+             return; 
           }
 
           if (resendModule && resendModule.logMessage) {
@@ -69,6 +69,7 @@ function listen({ api, client, Users, Threads, Currencies, config }) {
             });
           }
           break;
+        }
           
         case 'message_unsend':
           if (resendModule && resendModule.handleUnsend) {
@@ -81,6 +82,7 @@ function listen({ api, client, Users, Threads, Currencies, config }) {
           break;
           
         case 'event':
+          // Dito dadaan ang welcome at nicklock events
           await handleEvent({
             api, event, client, Users, Threads, config
           });
@@ -90,12 +92,6 @@ function listen({ api, client, Users, Threads, Currencies, config }) {
           
         case 'message_reaction':
           await handleReaction({ api, event, config });
-          break;
-          
-        case 'typ':
-        case 'read':
-        case 'read_receipt':
-        case 'presence':
           break;
           
         default:
