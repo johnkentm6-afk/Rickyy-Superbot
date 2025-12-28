@@ -7,6 +7,7 @@ async function handleNotification({ api, event, config }) {
   if (!adminID) return;
   
   try {
+    // NOTIFICATION PARA SA ADMIN LANG: Kapag ang bot ay na-add sa bagong group
     if (logMessageType === 'log:subscribe') {
       const addedParticipants = logMessageData.addedParticipants || [];
       const botID = api.getCurrentUserID();
@@ -31,11 +32,13 @@ Members: ${memberCount}
 ─────────────────
 Use .approve ${threadID} to approve`;
         
+        // I-pm ang admin, huwag sa group chat
         api.sendMessage(message, adminID);
         logs.info('NOTIFICATION', `Bot added to group: ${groupName} (${threadID})`);
       }
     }
     
+    // NOTIFICATION PARA SA ADMIN LANG: Kapag ang bot ay na-kick o tinanggal
     if (logMessageType === 'log:unsubscribe') {
       const leftParticipantFbId = logMessageData.leftParticipantFbId;
       const botID = api.getCurrentUserID();
@@ -60,6 +63,10 @@ Thread ID: ${threadID}
         logs.info('NOTIFICATION', `Bot removed from group: ${groupName} (${threadID})`);
       }
     }
+
+    // PAKITANDAAN: Inalis na natin ang logic para sa "Member Left" (taong umalis) 
+    // at "Admin Added" (taong ginawang admin) para hindi na mag-spam sa GC.
+
   } catch (error) {
     logs.error('NOTIFICATION', error.message);
   }
