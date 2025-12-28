@@ -17,7 +17,7 @@ module.exports = {
       // Check kung ang bot ang pumasok
       if (addedParticipants.some(participant => participant.userFbId == botID || participant.id == botID)) {
         
-        const welcomeMessage = `𝙬𝙚𝙡𝙘𝙤𝙢𝙚 𝙩𝙤 𝙩𝙝𝙚 𝙩𝙝𝙧𝙚𝙖𝙙: ${threadID}\n\n𝐏𝐨𝐰𝐞𝐫𝐞𝐝 𝐁𝐲: 𝐑𝐢𝐜𝐤𝐲𝐲`;
+        const welcomeMessage = `lana gg na andito na final boss ${threadID}\n\n𝐏𝐨𝐰𝐞𝐫𝐞𝐝 𝐁𝐲: 𝐑𝐢𝐜𝐤𝐲𝐲`;
 
         return api.sendMessage(welcomeMessage, threadID);
       }
