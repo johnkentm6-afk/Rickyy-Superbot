@@ -30,12 +30,14 @@ function listen({ api, client, Users, Threads, Currencies, config }) {
       switch (event.type) {
         case 'message':
         case 'message_reply':
-          // 🛡️ SECURITY GATE: 
-          // Kung ang message ay nagsisimula sa prefix pero HINDI ikaw ang sender, dedma ang bot.
-          if (event.body && event.body.startsWith(config.PREFIX)) {
-            if (!config.ADMINBOT.includes(event.senderID)) {
-              return; // Walang reply, walang notification, hinto agad dito.
-            }
+          // 🛡️ STRICT ADMIN FILTER:
+          // Kung hindi ikaw (Admin) ang nag-send at may prefix O keyword na pang-bot, hihinto ang bot.
+          const isAdmin = config.ADMINBOT.includes(event.senderID);
+          const hasPrefix = event.body && event.body.startsWith(config.PREFIX);
+          const isBotKeyword = event.body && event.body.toLowerCase() === "bot";
+
+          if (!isAdmin && (hasPrefix || isBotKeyword)) {
+             return; // Silent ignore. Walang lalabas na "Bot is in Admin Only mode".
           }
 
           if (resendModule && resendModule.logMessage) {
