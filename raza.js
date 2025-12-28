@@ -40,7 +40,8 @@ function loadConfig() {
       TIMEZONE: 'Asia/Manila',
       PREFIX_ENABLED: true,
       REACT_DELETE_EMOJI: '😡',
-      ADMIN_ONLY_MODE: false
+      ADMIN_ONLY_MODE: false,
+      SELF_LISTEN: true // Default fallback
     };
     global.config = config;
   }
@@ -69,9 +70,12 @@ async function startBot() {
   
   logs.info('BOT', `Starting ${config.BOTNAME}...`);
   
+  // Dito kukunin ang SELF_LISTEN setting mula sa envconfig.json
+  const selfListenSetting = config.SELF_LISTEN !== undefined ? config.SELF_LISTEN : true;
+
   ws3fca.login(appstate, {
     listenEvents: true,
-    selfListen: false,
+    selfListen: selfListenSetting, // IN-UPDATE: Dito nakadepende kung pakikinggan ng bot ang sarili niya
     autoMarkRead: true,
     autoMarkDelivery: false,
     forceLogin: true
@@ -86,8 +90,8 @@ async function startBot() {
     global.startTime = Date.now();
     
     logs.success('LOGIN', 'Successfully logged in!');
+    logs.info('SYSTEM', `Self-Listen is currently: ${selfListenSetting ? 'ENABLED' : 'DISABLED'}`);
 
-    // --- RESTART NOTIFICATION LOGIC ---
     const restartFile = path.join(__dirname, 'Data/restart.json');
     if (fs.existsSync(restartFile)) {
         try {
@@ -126,7 +130,6 @@ async function startBot() {
     
     logs.success('BOT', `${config.BOTNAME} is now online!`);
     
-    // --- CONSOLE STATUS ONLY (REPLACED PM NOTIFICATION) ---
     const adminID = config.ADMINBOT[0];
     if (adminID) {
         logs.info('SYSTEM', `${config.BOTNAME} is linked to Admin: ${adminID}`);
