@@ -7,10 +7,7 @@
   "REACT_DELETE_EMOJI": "😠",
   "PREFIX_ENABLED": false,
   "ADMIN_ONLY_MODE": true,
-  "AUTO_ISLAMIC_POST": false,
-  "AUTO_GROUP_MESSAGE": false,
-  "TIMEZONE": "Asia",
+  "TIMEZONE": "Asia/Manila",
   "APPROVE_ONLY": false,
-
   "SELF_LISTEN": true
 }
