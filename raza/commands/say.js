@@ -1,96 +1,81 @@
 const axios = require('axios');
 const fs = require('fs-extra');
+const path = require('path');
 
 module.exports = {
   config: {
     name: "say",
     version: "1.7",
-    author: "Samir Œ",
-    countDown: 5,
+    author: "Samir Œ / Edited for Raza",
     role: 0,
     category: "tts",
-    description: "bot will make your text into voice.",
-    guide: {
-      en: "{pn} your text (default will be 'en') | {pn} your text | [use two words ISO 639-1 code, ex: English-en, Bangla-bn, Hindi-hi or more, search Google for your language code]"
-    }
+    description: "Gagawing boses ang iyong text (Google TTS).",
+    usages: "say [text] | say [text] | [lang_code]",
+    cooldowns: 5,
+    prefix: false
   },
 
-  onStart: async function ({ api, args, message, event }) {
-    const { getPrefix } = global.utils;
-    const p = getPrefix(event.threadID);
+  run: async function ({ api, event, args }) {
+    const { threadID, messageID, type, messageReply } = event;
 
-    let text;
-    let number = 'en';
+    let text = "";
+    let lang = "tl"; // Default ay Tagalog (tl) o palitan ng 'en' para sa English
 
-    if (event.type === "message_reply") {
-      text = event.messageReply.body;
-    } else {
-      if (args && args.length > 0) {
-        if (args.includes("|")) {
-          const splitArgs = args.join(" ").split("|").map(arg => arg.trim());
-          text = splitArgs[0];
-          number = splitArgs[1] || 'en';
-        } else {
-          text = args.join(" ");
-        }
+    // Kunin ang text kung ito ay reply sa isang message
+    if (type === "message_reply") {
+      text = messageReply.body;
+    } else if (args.length > 0) {
+      // Check kung may separator na "|" para sa language code
+      const fullArgs = args.join(" ");
+      if (fullArgs.includes("|")) {
+        const splitArgs = fullArgs.split("|").map(arg => arg.trim());
+        text = splitArgs[0];
+        lang = splitArgs[1] || "tl";
       } else {
-        text = '';
+        text = fullArgs;
       }
     }
 
     if (!text) {
-      return message.reply(`Please provide some text. Example:\n${p}say hi there`);
+      return api.sendMessage("Magbigay ka ng text. Halimbawa: say kamusta ka na | tl", threadID, messageID);
     }
 
-    const path = `${__dirname}/tmp/tts.mp3`;
+    // Siguraduhing may 'tmp' folder
+    const tmpPath = path.join(__dirname, 'cache', `tts_${threadID}.mp3`);
+    if (!fs.existsSync(path.join(__dirname, 'cache'))) {
+      fs.ensureDirSync(path.join(__dirname, 'cache'));
+    }
 
     try {
-      if (text.length <= 150) {
-        const response = await axios({
-          method: "get",
-          url: `https://translate.google.com/translate_tts?ie=UTF-8&tl=${number}&client=tw-ob&q=${encodeURIComponent(text)}`,
-          responseType: "stream"
-        });
+      // Google TTS API URL
+      const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(text)}`;
+      
+      const response = await axios({
+        method: "get",
+        url: ttsUrl,
+        responseType: "stream"
+      });
 
-        const writer = fs.createWriteStream(path);
-        response.data.pipe(writer);
-        writer.on("finish", () => {
-          message.reply({
-            body: text,
-            attachment: fs.createReadStream(path)
-          }, () => {
-            fs.remove(path);
-          });
-        });
-      } else {
-        const chunkSize = 150;
-        const chunks = text.match(new RegExp(`.{1,${chunkSize}}`, 'g'));
+      const writer = fs.createWriteStream(tmpPath);
+      response.data.pipe(writer);
 
-        for (let i = 0; i < chunks.length; i++) {
-          const response = await axios({
-            method: "get",
-            url: `https://translate.google.com/translate_tts?ie=UTF-8&tl=${number}&client=tw-ob&q=${encodeURIComponent(chunks[i])}`,
-            responseType: "stream"
-          });
+      writer.on("finish", () => {
+        api.sendMessage({
+          body: `🗣️ Voice Message:`,
+          attachment: fs.createReadStream(tmpPath)
+        }, threadID, () => {
+          if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+        }, messageID);
+      });
 
-          const writer = fs.createWriteStream(path, { flags: i === 0 ? 'w' : 'a' });
-          response.data.pipe(writer);
+      writer.on("error", (err) => {
+        console.error(err);
+        api.sendMessage("Nagka-error sa pagsulat ng audio file.", threadID, messageID);
+      });
 
-          if (i === chunks.length - 1) {
-            writer.on("finish", () => {
-              message.reply({
-                body: text,
-                attachment: fs.createReadStream(path)
-              }, () => {
-                fs.remove(path);
-              });
-            });
-          }
-        }
-      }
     } catch (err) {
       console.error(err);
-      message.reply("An error occurred while trying to convert your text to speech or send it as an attachment. Please try again later.");
+      api.sendMessage("Hindi ma-convert ang text sa boses. Siguraduhing tama ang language code.", threadID, messageID);
     }
   }
 };
