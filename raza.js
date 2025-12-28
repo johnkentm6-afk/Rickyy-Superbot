@@ -26,7 +26,6 @@ let client = {
   cooldowns: new Map()
 };
 
-// Global storage para sa timers (importante para sa stop commands ng ibang scripts)
 global.rageModeTimers = new Map();
 
 function loadConfig() {
@@ -36,10 +35,10 @@ function loadConfig() {
   } catch (error) {
     logs.error('CONFIG', 'Failed to load config:', error.message);
     config = {
-      BOTNAME: 'RAZA BOT',
-      PREFIX: '.',
-      ADMINBOT: ['61582493356125'],
-      TIMEZONE: 'Asia/Karachi',
+      BOTNAME: 'Rickyy',
+      PREFIX: '&',
+      ADMINBOT: ['61581956827969'],
+      TIMEZONE: 'Asia/Manila',
       PREFIX_ENABLED: true,
       REACT_DELETE_EMOJI: '😡',
       ADMIN_ONLY_MODE: false,
@@ -68,13 +67,10 @@ async function startBot() {
     appstate = fs.readJsonSync(appstatePath);
   } catch (error) {
     logs.error('APPSTATE', 'Failed to load appstate.json');
-    logs.error('APPSTATE', 'Please provide valid appstate through the web panel');
     return;
   }
   
   logs.info('BOT', 'Starting RAZA BOT...');
-  logs.info('BOT', `Timezone: ${config.TIMEZONE}`);
-  logs.info('BOT', `Prefix: ${config.PREFIX}`);
   
   ws3fca.login(appstate, {
     listenEvents: true,
@@ -93,6 +89,20 @@ async function startBot() {
     global.startTime = Date.now();
     
     logs.success('LOGIN', 'Successfully logged in!');
+
+    // --- RESTART NOTIFICATION LOGIC START ---
+    const restartFile = path.join(__dirname, 'Data/restart.json');
+    if (fs.existsSync(restartFile)) {
+        try {
+            const restartData = fs.readJsonSync(restartFile);
+            api.sendMessage(`Restart Successful!✅ ${config.BOTNAME} is now back online.`, restartData.threadID);
+            fs.removeSync(restartFile);
+            logs.success('RESTART', 'Sent restart confirmation message.');
+        } catch (e) {
+            logs.error('RESTART', 'Failed to send restart notification.');
+        }
+    }
+    // --- RESTART NOTIFICATION LOGIC END ---
     
     const Users = new UsersController(api);
     const Threads = new ThreadsController(api);
@@ -106,8 +116,6 @@ async function startBot() {
     await loadEvents(client, eventsPath);
     
     global.client = client;
-    
-    // Inalis na ang setupSchedulers() dito
     
     const listener = listen({
       api,
@@ -130,19 +138,11 @@ async function startBot() {
     const actualEventCount = client.events.size;
     
     logs.success('BOT', `${config.BOTNAME} is now online!`);
-    logs.info('BOT', `Commands loaded: ${actualCommandCount}`);
-    logs.info('BOT', `Events loaded: ${actualEventCount}`);
     
     const adminID = config.ADMINBOT[0];
-    if (adminID) {
+    if (adminID && !fs.existsSync(restartFile)) { // Notify only if NOT a restart
       try {
-        await api.sendMessage(`${config.BOTNAME} is now online!
-─────────────────
-Commands: ${actualCommandCount}
-Events: ${actualEventCount}
-Prefix: ${config.PREFIX}
-─────────────────
-Type ${config.PREFIX}help for commands`, adminID);
+        await api.sendMessage(`${config.BOTNAME} is now online!`, adminID);
       } catch (e) {
         logs.warn('NOTIFY', 'Could not send startup message to admin');
       }
@@ -150,7 +150,7 @@ Type ${config.PREFIX}help for commands`, adminID);
   });
 }
 
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason) => {
   logs.warn('UNHANDLED', 'Unhandled Promise Rejection:', reason?.message || reason);
 });
 
@@ -160,7 +160,6 @@ process.on('uncaughtException', (error) => {
 
 module.exports = {
   startBot,
-  getApi: () => api,
   getApi: () => api,
   getClient: () => client,
   getConfig: () => config,
