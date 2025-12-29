@@ -4,10 +4,10 @@ const path = require('path');
 module.exports = {
     config: {
         name: "attack",
-        version: "3.0.0",
+        version: "3.1.0",
         author: "Rickyy / Gemini",
         role: 2,
-        description: "Sequential attack with random delays & auto-unsend status",
+        description: "Sequential attack with safe auto-unsend",
         category: "group",
         usages: "attack on [name] | attack off",
         cooldowns: 5,
@@ -16,35 +16,45 @@ module.exports = {
 
     run: async function({ api, args, event }) {
         const { threadID, messageID } = event;
+        // Siguraduhin na tama ang folder: raza/commands/data/gali.txt
         const galiPath = path.join(__dirname, 'data', 'gali.txt');
-        
-        // Dito natin i-set na 5 seconds (5000ms) lang ang itatagal ng status messages
-        const STATUS_MSG_LIFESPAN = 5000; 
+        const STATUS_MSG_LIFESPAN = 5000; // 5 seconds bago burahin
+
+        console.log(`[ATTACK] Command triggered in thread: ${threadID}`);
 
         if (!global.attackTimers) global.attackTimers = new Map();
+
+        // Helper function para safe na mag-unsend (Iwas crash)
+        const safeUnsend = (msgID) => {
+            if (!msgID) return;
+            try {
+                // Check kung may unsend function ang API mo
+                if (typeof api.unsendMessage === 'function') {
+                    setTimeout(() => {
+                        api.unsendMessage(msgID, (err) => {
+                            if (err) console.log("[ATTACK] Failed to unsend (ignore):", err.message);
+                        });
+                    }, STATUS_MSG_LIFESPAN);
+                } else {
+                    console.log("[ATTACK] API does not support unsendMessage. Skipping unsend.");
+                }
+            } catch (e) {
+                console.log("[ATTACK] Error in unsend logic:", e.message);
+            }
+        };
 
         // 🛑 OFF LOGIC
         if (args[0] === "off") {
             if (global.attackTimers.has(threadID)) {
-                // Tigil ang timer
                 clearTimeout(global.attackTimers.get(threadID));
                 global.attackTimers.delete(threadID);
                 
-                // Send OFF message -> tapos UNSEND after 5 seconds
                 return api.sendMessage("𝗣𝗮𝘂𝘀𝗲 𝗺𝘂𝗻𝗮, 𝗸𝗮𝘄𝗮𝘄𝗮 𝗸𝗮 𝗻𝗮 𝗺𝗮𝘀𝘆𝗮𝗱𝗼 𝘀𝗮𝗯𝗶 𝗻𝗴 𝗯𝗼𝘀𝘀 𝗸𝗼𝗻𝗴 𝘀𝗶 𝗥𝗶𝗰𝗸𝘆𝘆.", threadID, (err, info) => {
-                    if (!err && info) {
-                        setTimeout(() => {
-                            api.unsendMessage(info.messageID);
-                        }, STATUS_MSG_LIFESPAN);
-                    }
+                    if (!err && info) safeUnsend(info.messageID);
                 }, messageID);
             } else {
                 return api.sendMessage("buti nalang pinatay mo sir nakakaawa na", threadID, (err, info) => {
-                    if (!err && info) {
-                        setTimeout(() => {
-                            api.unsendMessage(info.messageID);
-                        }, STATUS_MSG_LIFESPAN);
-                    }
+                    if (!err && info) safeUnsend(info.messageID);
                 }, messageID);
             }
         }
@@ -64,10 +74,13 @@ module.exports = {
                 if (fs.existsSync(galiPath)) {
                     const content = fs.readFileSync(galiPath, 'utf-8');
                     pambaraList = content.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+                    console.log(`[ATTACK] Loaded ${pambaraList.length} lines from gali.txt`);
                 } else {
+                    console.log("[ATTACK] gali.txt not found!");
                     return api.sendMessage("❌ Error: gali.txt not found sa data folder.", threadID, messageID);
                 }
             } catch (e) {
+                console.log("[ATTACK] Error reading file:", e.message);
                 return api.sendMessage("❌ Error reading gali.txt file.", threadID, messageID);
             }
 
@@ -75,48 +88,41 @@ module.exports = {
 
             // Send INTRO message -> tapos UNSEND after 5 seconds
             api.sendMessage(`tatagal ba sakin yan si "${targetName}" 👊\n sir rickyy? hindi makakatulog sakin yan 🥷🏻.`, threadID, (err, info) => {
-                if (!err && info) {
-                    setTimeout(() => {
-                        api.unsendMessage(info.messageID);
-                    }, STATUS_MSG_LIFESPAN);
-                }
+                if (!err && info) safeUnsend(info.messageID);
             });
 
             let index = 0;
 
-            // Dito ang logic ng attack loop
+            // Attack Loop
             const attackSequence = async () => {
-                // Check kung pinatay na (OFF) habang naghihintay
                 if (!global.attackTimers.has(threadID)) return;
 
                 const finalMessage = `${targetName} ${pambaraList[index]}`;
                 
-                // Typing indicator (para iwas spam detect)
                 api.sendTypingIndicator(threadID, () => {
-                    // Send attack message
                     api.sendMessage(finalMessage, threadID, (err, info) => {
-                        if (!err && info) {
-                            // Reaction after 1.5 seconds
+                        if (err) {
+                            console.log("[ATTACK] Error sending message:", err);
+                            return; // Skip reaction if send failed
+                        }
+                        if (info) {
                             setTimeout(() => {
-                                api.setMessageReaction("😆", info.messageID, () => {}, true);
+                                api.setMessageReaction("😆", info.messageID, (err) => {}, true);
                             }, 1500);
                         }
                     });
                 });
 
-                // Auto-loop: Balik sa simula kapag naubos ang text
                 index = (index + 1) % pambaraList.length;
 
-                // 🎲 RANDOM DELAY: 5 to 10 seconds
-                // Math.random() * (max - min + 1) + min
+                // Random delay: 5 to 10 seconds
                 const randomDelay = Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000;
                 
-                // Set next attack timer
                 const timer = setTimeout(attackSequence, randomDelay);
                 global.attackTimers.set(threadID, timer);
             };
 
-            // Start delay bago magsimula ang unang banat (2 seconds after ng intro)
+            // Start delay
             const startTimer = setTimeout(attackSequence, 2000);
             global.attackTimers.set(threadID, startTimer);
 
