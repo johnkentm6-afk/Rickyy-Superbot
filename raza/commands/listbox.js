@@ -44,7 +44,7 @@ module.exports = {
         if (action === "out") {
           api.removeUserFromGroup(api.getCurrentUserID(), targetID, (err) => {
             if (err) return api.sendMessage(`❌ Hindi makalabas sa GC: ${err.message}`, threadID, messageID);
-            api.sendMessage(`✅ Matagumpay na lumabas ang bot sa group ID: ${targetID}`, threadID, messageID);
+            api.sendMessage(`✅ Matagumpay na lumabas ang bata mo sa group sir ID: ${targetID}`, threadID, messageID);
           });
         }
         break;
@@ -82,9 +82,9 @@ module.exports = {
         i++;
       }
 
-      if (groupid.length === 0) return api.sendMessage("Wala pang sinalihang group chat ang bot.", threadID, messageID);
+      if (groupid.length === 0) return api.sendMessage("wala ka pang nasasalihan na gc sir", threadID, messageID);
 
-      return api.sendMessage(msg + '𝐏𝐨𝐰𝐞𝐫𝐞𝐝 𝐁𝐲: 𝐑𝐢𝐜𝐤𝐲𝐲.', threadID, (err, info) => {
+      return api.sendMessage(msg + '𝗣𝗼𝘄𝗲𝗿𝗲𝗱 𝗯𝘆: 𝗥𝗶𝗰𝗸𝘆𝘆 𝗗. 𝗞𝗮𝗻𝘁𝘂𝘁𝗲𝗿𝗼.', threadID, (err, info) => {
         if (client.replies) {
           client.replies.set(info.messageID, {
             commandName: 'listbox',
