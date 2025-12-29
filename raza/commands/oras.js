@@ -14,25 +14,38 @@ module.exports = {
     prefix: false 
   },
 
+  handleEvent: async function ({ api, event, Users }) {
+    const { body, senderID } = event;
+    if (!body) return;
+
+    // Manual check para sa role: 2 (Admin Only)
+    const adminConfig = global.config.ADMINBOT || [];
+    if (!adminConfig.includes(senderID)) return;
+
+    // Trigger kung tinype mo ang eksaktong nasa usage mo
+    if (body.toLowerCase() === "ilang oras kana sa gc") {
+      return this.run({ api, event });
+    }
+  },
+
   run: async function ({ api, event }) {
     const { threadID, messageID } = event;
 
     try {
-      // 1. React ng Heart (❤️) sa command ng user
       api.setMessageReaction("❤️", messageID, (err) => {}, true);
 
-      // 2. Calculate Uptime (Parehas sa uptime.js mo)
+      // Kinukuha ang simula ng bot mula sa global variable
+      if (!global.startTime) return;
+
       const uptimeInSeconds = (Date.now() - global.startTime) / 1000;
       const days = Math.floor(uptimeInSeconds / (3600 * 24));
       const hours = Math.floor((uptimeInSeconds % (3600 * 24)) / 3600);
       const minutes = Math.floor((uptimeInSeconds % 3600) / 60);
 
-      // 3. Tagalog Translation Logic
       const toTagalog = (num, unit) => {
         if (num === 0) return "";
         let nText = "";
         
-        // Basic translation for common numbers
         const names = {
           1: "isang", 2: "dalawang", 3: "tatlong", 4: "apat na", 5: "limang",
           10: "sampung", 20: "dalawampung", 25: "dalawampu't limang"
@@ -50,7 +63,6 @@ module.exports = {
       let hourTxt = toTagalog(hours, "hour");
       let minTxt = toTagalog(minutes, "min");
 
-      // 4. Buuin ang Sentence
       let output = "";
       let parts = [dayTxt, hourTxt, minTxt].filter(Boolean);
 
@@ -63,13 +75,10 @@ module.exports = {
         output = `${parts.join(", ")} at ${huli} na ako rito sir.`;
       }
 
-      // 5. Send Response
       return api.sendMessage(output, threadID, messageID);
 
     } catch (error) {
       console.error(error);
-      api.sendMessage("Hindi ko mabilang sir, parang nahihilo ako.", threadID);
     }
   },
 };
-        
