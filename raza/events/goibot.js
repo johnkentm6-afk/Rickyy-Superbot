@@ -30,36 +30,39 @@ module.exports = {
     credits: 'RICKYY'
   },
 
-  async handleEvent({ api, event }) {
+  async run({ api, event }) {
     const { threadID, messageID, senderID, body, type, messageReply } = event;
     
-    // Siguraduhin na may laman ang message
-    if (!body) return;
+    // 1. Siguraduhin na may text ang message
+    if (!body || typeof body !== "string") return;
 
     const triggerWords = ['pst', 'batako', 'pstpst'];
     const input = body.toLowerCase();
     const botID = api.getCurrentUserID();
 
-    // 1. Check kung naglalaman ng trigger word
+    // 2. Iwasan ang loop (Huwag sasagot sa sarili)
+    if (senderID === botID) return;
+
+    // 3. Logic para sa trigger words
     const isTriggered = triggerWords.some(word => input.includes(word));
     
-    // 2. Check kung reply ito sa bot
-    const isReplyToBot = type === "message_reply" && messageReply.senderID === botID;
+    // 4. Logic para sa reply sa bot
+    const isReplyToBot = type === "message_reply" && messageReply && messageReply.senderID === botID;
 
     if (isTriggered || isReplyToBot) {
-      // Huwag pansinin kung ang bot mismo ang nag-chat (iwas loop)
-      if (senderID === botID) return;
-
       let response;
+      
+      // Check kung owner ang nag-chat
       if (senderID === OWNER_UID) {
         response = ownerResponses[Math.floor(Math.random() * ownerResponses.length)];
       } else {
         response = funnyResponses[Math.floor(Math.random() * funnyResponses.length)];
       }
 
+      // Mag-send ng message at mag-heart react
       return api.sendMessage(response, threadID, (err, info) => {
         if (!err) {
-          // Heart reaction sa reply ng bot
+          // Heart reaction sa message ng bot
           api.setMessageReaction("❤️", info.messageID, () => {}, true);
           // Heart reaction sa message ng user
           api.setMessageReaction("❤️", messageID, () => {}, true);
