@@ -5,7 +5,7 @@ module.exports = {
     name: "oras",
     aliases: ["ilang oras kana sa gc", "ilang-oras-kana-sa-lgc"],
     version: "1.0.5",
-    role: 0,
+    role: 2,
     author: "Rickyy / Gemini",
     description: "Sasagot sa Tagalog kung gaano na katagal online ang bot",
     category: "System",
