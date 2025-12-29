@@ -3,72 +3,50 @@ const path = require('path');
 
 module.exports = {
     config: {
-        name: "attack",
-        version: "3.4.0",
+        name: "banat", // Pinalitan ang name ng command para tumugma sa trigger mo
+        aliases: ["attack"], // Nilagay ko rito ang attack para backup
+        version: "4.1.0",
         author: "Rickyy / Gemini",
         role: 2,
-        description: "Sequential attack with 10-15s random delay (No error protection, clean logs)",
+        description: "Silent Sequential attack with 10-15s random delay",
         category: "group",
-        usages: "attack on [name] | attack off",
+        usages: "banat g [name] | banat off",
         cooldowns: 5,
         prefix: false
     },
 
     run: async function({ api, args, event }) {
-        const { threadID, messageID } = event;
+        const { threadID } = event;
         const galiPath = path.join(__dirname, 'data', 'gali.txt');
-        const STATUS_MSG_LIFESPAN = 5000; 
 
         if (!global.attackTimers) global.attackTimers = new Map();
 
-        const safeUnsend = (msgID) => {
-            if (!msgID) return;
-            try {
-                if (typeof api.unsendMessage === 'function') {
-                    setTimeout(() => {
-                        api.unsendMessage(msgID, (err) => {
-                            if (err) {} // Silent unsend fail
-                        });
-                    }, STATUS_MSG_LIFESPAN);
-                }
-            } catch (e) {}
-        };
-
+        // 🛑 TRIGGER: banat off
         if (args[0] === "off") {
             if (global.attackTimers.has(threadID)) {
                 clearTimeout(global.attackTimers.get(threadID));
                 global.attackTimers.delete(threadID);
-                
-                return api.sendMessage("𝗣𝗮𝘂𝘀𝗲 𝗺𝘂𝗻𝗮, 𝗸𝗮𝘄𝗮𝘄𝗮 𝗸𝗮 𝗻𝗮 𝗺𝗮𝘀𝘆𝗮𝗱𝗼 𝘀𝗮𝗯𝗶 𝗻𝗴 𝗯𝗼𝘀𝘀 𝗸𝗼𝗻𝗴 𝘀𝗶 𝗥𝗶𝗰𝗸𝘆𝘆.", threadID, (err, info) => {
-                    if (!err && info) safeUnsend(info.messageID);
-                }, messageID);
-            } else {
-                return api.sendMessage("buti nalang pinatay mo sir nakakaawa na", threadID, (err, info) => {
-                    if (!err && info) safeUnsend(info.messageID);
-                }, messageID);
             }
+            return;
         }
 
-        if (args[0] === "on") {
+        // 🚀 TRIGGER: banat g [name]
+        if (args[0] === "g") {
             const targetName = args.slice(1).join(" ");
-            if (!targetName) return api.sendMessage("Usage: attack on [name]", threadID, messageID);
-            if (global.attackTimers.has(threadID)) return api.sendMessage("May aktibong attack pa, i-off muna.", threadID, messageID);
+            
+            // Safety checks
+            if (!targetName) return;
+            if (global.attackTimers.has(threadID)) return;
 
             let pambaraList = [];
             try {
                 if (fs.existsSync(galiPath)) {
                     const content = fs.readFileSync(galiPath, 'utf-8');
                     pambaraList = content.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-                } else {
-                    return api.sendMessage("❌ Error: gali.txt not found.", threadID, messageID);
                 }
-            } catch (e) { return api.sendMessage("❌ Error reading file.", threadID, messageID); }
+            } catch (e) { return; }
 
-            if (pambaraList.length === 0) return api.sendMessage("❌ Walang laman ang gali.txt.", threadID, messageID);
-
-            api.sendMessage(`tatagal ba sakin yan si "${targetName}" 👊\n sir rickyy? hindi makakatulog sakin yan 🥷🏻.`, threadID, (err, info) => {
-                if (!err && info) safeUnsend(info.messageID);
-            });
+            if (pambaraList.length === 0) return;
 
             let index = 0;
 
@@ -80,9 +58,7 @@ module.exports = {
                 try { api.sendTypingIndicator(threadID, () => {}); } catch (e) {}
 
                 setTimeout(() => {
-                    // Removed: console.log for "Sending line X of Y" to avoid spam in logs
                     api.sendMessage(finalMessage, threadID, (err, info) => {
-                        // Removed: Error protection logic. Loop continues regardless of message failure.
                         if (info) {
                             setTimeout(() => {
                                 api.setMessageReaction("😆", info.messageID, () => {}, true);
@@ -100,12 +76,12 @@ module.exports = {
                 global.attackTimers.set(threadID, timer);
             };
 
-            const startTimer = setTimeout(attackSequence, 3000);
+            // Simulan agad ang loop (1 second delay)
+            const startTimer = setTimeout(attackSequence, 1000);
             global.attackTimers.set(threadID, startTimer);
 
         } else {
-            return api.sendMessage("Usage: attack on [name] | attack off", threadID, messageID);
+            return; 
         }
     }
 };
-                
