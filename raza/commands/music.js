@@ -7,7 +7,7 @@ module.exports.config = {
     name: "music",
     version: "5.0.0",
     permission: 0,
-    prefix: true,
+    prefix: false,
     premium: false,
     category: "media",
     credits: "Kashif Raza",
