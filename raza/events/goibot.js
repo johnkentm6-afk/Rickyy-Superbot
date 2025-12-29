@@ -24,41 +24,47 @@ const ownerResponses = [
 
 module.exports = {
   config: {
-    name: 'goibot_event',
-    eventType: ['message', 'message_reply'], // Pakikinggan ang chat kahit hindi command
-    description: 'Auto reply kahit naka Admin Only mode'
+    name: 'goibot',
+    eventType: ["message", "message_reply"], 
+    description: 'Auto reply kahit naka Admin Only mode',
+    credits: 'RICKYY'
   },
 
-  async run({ api, event }) {
-    const { threadID, messageID, senderID, body } = event;
+  async handleEvent({ api, event }) {
+    const { threadID, messageID, senderID, body, type, messageReply } = event;
+    
+    // Siguraduhin na may laman ang message
     if (!body) return;
 
-    // Listahan ng mga salitang magpapa-trigger sa bot
     const triggerWords = ['pst', 'batako', 'pstpst'];
     const input = body.toLowerCase();
+    const botID = api.getCurrentUserID();
 
-    // Check kung ang message ay naglalaman ng trigger words o reply sa bot
+    // 1. Check kung naglalaman ng trigger word
     const isTriggered = triggerWords.some(word => input.includes(word));
-    const isReplyToBot = event.type === "message_reply" && event.messageReply.senderID === api.getCurrentUserID();
+    
+    // 2. Check kung reply ito sa bot
+    const isReplyToBot = type === "message_reply" && messageReply.senderID === botID;
 
     if (isTriggered || isReplyToBot) {
+      // Huwag pansinin kung ang bot mismo ang nag-chat (iwas loop)
+      if (senderID === botID) return;
+
       let response;
-      
       if (senderID === OWNER_UID) {
         response = ownerResponses[Math.floor(Math.random() * ownerResponses.length)];
       } else {
         response = funnyResponses[Math.floor(Math.random() * funnyResponses.length)];
       }
 
-      // Mag-send ng message at mag-auto heart reaction
       return api.sendMessage(response, threadID, (err, info) => {
         if (!err) {
+          // Heart reaction sa reply ng bot
           api.setMessageReaction("❤️", info.messageID, () => {}, true);
-          // I-react din ang message ng user
+          // Heart reaction sa message ng user
           api.setMessageReaction("❤️", messageID, () => {}, true);
         }
       }, messageID);
     }
   }
 };
-        
