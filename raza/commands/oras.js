@@ -3,7 +3,7 @@ const moment = require("moment-timezone");
 module.exports = {
   config: {
     name: "oras",
-    aliases: ["ilang oras kana sa gc", "ilang-oras-kana-sa-lgc"],
+    aliases: ["ilang oras kana sa gc", "ilang oras kana sa lgc"],
     version: "1.0.5",
     role: 2,
     author: "Rickyy / Gemini",
