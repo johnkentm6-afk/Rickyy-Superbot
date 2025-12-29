@@ -45,7 +45,7 @@ Aliases: ${cfg.aliases?.join(', ') || 'None'}
 Category: ${cfg.category || 'Other'}
 Admin Only: ${cfg.adminOnly ? 'Yes' : 'No'}
 ─────────────────
-𝐏𝐨𝐰𝐞𝐫𝐞𝐝 𝐁𝐲: 𝐑𝐢𝐜𝐤𝐲𝐲`);
+𝗣𝗼𝘄𝗲𝗿𝗲𝗱 𝗯𝘆: 𝗥𝗶𝗰𝗸𝘆𝘆 𝗗. 𝗞𝗮𝗻𝘁𝘂𝘁𝗲𝗿𝗼`);
     }
     
     return showPagedCommands({ api, event, send, client, config, page: 1 });
@@ -131,7 +131,7 @@ Total: ${uniqueCommands.size} commands
   }
   
   msg += `\n─────────────────
-𝐏𝐨𝐰𝐞𝐫𝐞𝐝 𝐁𝐲: 𝐑𝐢𝐜𝐤𝐲𝐲`;
+𝗣𝗼𝘄𝗲𝗿𝗲𝗱 𝗯𝘆: 𝗥𝗶𝗰𝗸𝘆𝘆 𝗗. 𝗞𝗮𝗻𝘁𝘂𝘁𝗲𝗿𝗼`;
   
   return send.reply(msg);
 }
