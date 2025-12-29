@@ -6,7 +6,7 @@ module.exports = {
     usage: 'admin [add/remove/list] [uid]',
     category: 'Admin',
     adminOnly: true,
-    prefix: true
+    prefix: false
   },
   
   async run({ api, event, args, send, config }) {
