@@ -10,7 +10,7 @@ module.exports = {
     usage: 'restart',
     category: 'Admin',
     adminOnly: true,
-    prefix: true
+    prefix: false
   },
   
   async run({ api, event, send, config }) {
