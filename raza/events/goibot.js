@@ -26,45 +26,45 @@ module.exports = {
   config: {
     name: 'goibot',
     eventType: ["message", "message_reply"], 
-    description: 'Auto reply kahit naka Admin Only mode',
+    description: 'Auto reply with smart loop protection for Self-Listen',
     credits: 'RICKYY'
   },
 
   async run({ api, event }) {
     const { threadID, messageID, senderID, body, type, messageReply } = event;
     
-    // 1. Siguraduhin na may text ang message
     if (!body || typeof body !== "string") return;
 
     const triggerWords = ['pst', 'batako', 'pstpst'];
     const input = body.toLowerCase();
     const botID = api.getCurrentUserID();
 
-    // 2. Iwasan ang loop (Huwag sasagot sa sarili)
-    if (senderID === botID) return;
+    // --- SMART LOOP PROTECTION ---
+    // 1. Kung ang message ay reply sa sarili niyang reply, STALEMATE. Hihinto na ang bot.
+    if (type === "message_reply" && messageReply && messageReply.senderID === botID && senderID === botID) {
+        return;
+    }
 
-    // 3. Logic para sa trigger words
+    // 2. Logic para sa triggers
     const isTriggered = triggerWords.some(word => input.includes(word));
-    
-    // 4. Logic para sa reply sa bot
     const isReplyToBot = type === "message_reply" && messageReply && messageReply.senderID === botID;
 
     if (isTriggered || isReplyToBot) {
       let response;
       
-      // Check kung owner ang nag-chat
-      if (senderID === OWNER_UID) {
+      // Check kung ikaw ang nag-chat (Owner UID) o yung Bot account mismo
+      if (senderID === OWNER_UID || senderID === botID) {
         response = ownerResponses[Math.floor(Math.random() * ownerResponses.length)];
       } else {
         response = funnyResponses[Math.floor(Math.random() * funnyResponses.length)];
       }
 
-      // Mag-send ng message at mag-heart react
+      // Mag-send ng message
       return api.sendMessage(response, threadID, (err, info) => {
         if (!err) {
-          // Heart reaction sa message ng bot
+          // React sa bot message
           api.setMessageReaction("❤️", info.messageID, () => {}, true);
-          // Heart reaction sa message ng user
+          // React sa user/bot account message
           api.setMessageReaction("❤️", messageID, () => {}, true);
         }
       }, messageID);
