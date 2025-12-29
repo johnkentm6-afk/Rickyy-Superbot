@@ -4,10 +4,10 @@ const path = require('path');
 module.exports = {
     config: {
         name: "attack",
-        version: "2.6.0",
+        version: "3.0.0",
         author: "Rickyy / Gemini",
         role: 2,
-        description: "Sequential attack with randomized delay and 1-minute auto-unsend status",
+        description: "Sequential attack with random delays & auto-unsend status",
         category: "group",
         usages: "attack on [name] | attack off",
         cooldowns: 5,
@@ -17,23 +17,34 @@ module.exports = {
     run: async function({ api, args, event }) {
         const { threadID, messageID } = event;
         const galiPath = path.join(__dirname, 'data', 'gali.txt');
-        const UNSEND_DELAY = 60000; // 1 minute (60,000ms) para sa auto-unsend
+        
+        // Dito natin i-set na 5 seconds (5000ms) lang ang itatagal ng status messages
+        const STATUS_MSG_LIFESPAN = 5000; 
 
         if (!global.attackTimers) global.attackTimers = new Map();
 
         // 🛑 OFF LOGIC
         if (args[0] === "off") {
             if (global.attackTimers.has(threadID)) {
+                // Tigil ang timer
                 clearTimeout(global.attackTimers.get(threadID));
                 global.attackTimers.delete(threadID);
                 
-                // Ang dati mong "off" message na mag-u-unsend after 1 minute
+                // Send OFF message -> tapos UNSEND after 5 seconds
                 return api.sendMessage("𝗣𝗮𝘂𝘀𝗲 𝗺𝘂𝗻𝗮, 𝗸𝗮𝘄𝗮𝘄𝗮 𝗸𝗮 𝗻𝗮 𝗺𝗮𝘀𝘆𝗮𝗱𝗼 𝘀𝗮𝗯𝗶 𝗻𝗴 𝗯𝗼𝘀𝘀 𝗸𝗼𝗻𝗴 𝘀𝗶 𝗥𝗶𝗰𝗸𝘆𝘆.", threadID, (err, info) => {
-                    if (!err) setTimeout(() => api.unsendMessage(info.messageID), UNSEND_DELAY);
+                    if (!err && info) {
+                        setTimeout(() => {
+                            api.unsendMessage(info.messageID);
+                        }, STATUS_MSG_LIFESPAN);
+                    }
                 }, messageID);
             } else {
                 return api.sendMessage("buti nalang pinatay mo sir nakakaawa na", threadID, (err, info) => {
-                    if (!err) setTimeout(() => api.unsendMessage(info.messageID), UNSEND_DELAY);
+                    if (!err && info) {
+                        setTimeout(() => {
+                            api.unsendMessage(info.messageID);
+                        }, STATUS_MSG_LIFESPAN);
+                    }
                 }, messageID);
             }
         }
@@ -41,6 +52,7 @@ module.exports = {
         // 🚀 ON LOGIC
         if (args[0] === "on") {
             const targetName = args.slice(1).join(" ");
+            
             if (!targetName) return api.sendMessage("𝗦𝗶𝗻𝗼 𝗮𝗻𝗴 𝗮𝗮𝘁𝗮𝗸𝗶𝗵𝗶𝗻 𝗸𝗼? (Usage: attack on [name])", threadID, messageID);
             
             if (global.attackTimers.has(threadID)) {
@@ -61,43 +73,50 @@ module.exports = {
 
             if (pambaraList.length === 0) return api.sendMessage("❌ Walang laman ang gali.txt mo.", threadID, messageID);
 
-            // Ang dati mong panimulang message na mag-u-unsend after 1 minute
+            // Send INTRO message -> tapos UNSEND after 5 seconds
             api.sendMessage(`tatagal ba sakin yan si "${targetName}" 👊\n sir rickyy? hindi makakatulog sakin yan 🥷🏻.`, threadID, (err, info) => {
-                if (!err) setTimeout(() => api.unsendMessage(info.messageID), UNSEND_DELAY);
+                if (!err && info) {
+                    setTimeout(() => {
+                        api.unsendMessage(info.messageID);
+                    }, STATUS_MSG_LIFESPAN);
+                }
             });
 
             let index = 0;
 
+            // Dito ang logic ng attack loop
             const attackSequence = async () => {
+                // Check kung pinatay na (OFF) habang naghihintay
                 if (!global.attackTimers.has(threadID)) return;
 
                 const finalMessage = `${targetName} ${pambaraList[index]}`;
                 
-                // Human-like Typing
+                // Typing indicator (para iwas spam detect)
                 api.sendTypingIndicator(threadID, () => {
-                    setTimeout(() => {
-                        api.sendMessage(finalMessage, threadID, (err, info) => {
-                            if (!err && info) {
-                                // Reaction Delay (1.5s) para iwas automation detection
-                                setTimeout(() => {
-                                    api.setMessageReaction("😆", info.messageID, () => {}, true);
-                                }, 1500);
-                            }
-                        });
-                    }, 1500); 
+                    // Send attack message
+                    api.sendMessage(finalMessage, threadID, (err, info) => {
+                        if (!err && info) {
+                            // Reaction after 1.5 seconds
+                            setTimeout(() => {
+                                api.setMessageReaction("😆", info.messageID, () => {}, true);
+                            }, 1500);
+                        }
+                    });
                 });
 
                 // Auto-loop: Balik sa simula kapag naubos ang text
                 index = (index + 1) % pambaraList.length;
 
-                // 🎲 RANDOM DELAY: 5 hanggang 10 seconds para hindi ma-detect ni FB
+                // 🎲 RANDOM DELAY: 5 to 10 seconds
+                // Math.random() * (max - min + 1) + min
                 const randomDelay = Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000;
                 
+                // Set next attack timer
                 const timer = setTimeout(attackSequence, randomDelay);
                 global.attackTimers.set(threadID, timer);
             };
 
-            // Simulan ang sequence pagkatapos ng 2 seconds
+            // Start delay bago magsimula ang unang banat (2 seconds after ng intro)
             const startTimer = setTimeout(attackSequence, 2000);
             global.attackTimers.set(threadID, startTimer);
 
