@@ -4,46 +4,37 @@ const path = require('path');
 module.exports = {
     config: {
         name: "attack",
-        version: "1.6.0",
+        version: "2.1.0",
         author: "Rickyy / Gemini",
         role: 2,
-        description: "Sequential attack mode gamit ang gali.txt",
+        description: "Fast but safe sequential attack mode",
         category: "group",
         usages: "attack on [name] | attack off",
-        cooldowns: 15,
+        cooldowns: 5,
         prefix: false
     },
 
     run: async function({ api, args, event }) {
         const { threadID, messageID } = event;
-        
-        // Path papunta sa gali.txt base sa folder structure mo
         const galiPath = path.join(__dirname, 'data', 'gali.txt');
 
         if (!global.attackTimers) global.attackTimers = new Map();
 
-        // OFF LOGIC
         if (args[0] === "off") {
             if (global.attackTimers.has(threadID)) {
-                clearInterval(global.attackTimers.get(threadID));
+                clearTimeout(global.attackTimers.get(threadID));
                 global.attackTimers.delete(threadID);
                 return api.sendMessage("𝗣𝗮𝘂𝘀𝗲 𝗺𝘂𝗻𝗮, 𝗸𝗮𝘄𝗮𝘄𝗮 𝗸𝗮 𝗻𝗮 𝗺𝗮𝘀𝘆𝗮𝗱𝗼 𝘀𝗮𝗯𝗶 𝗻𝗴 𝗯𝗼𝘀𝘀 𝗸𝗼𝗻𝗴 𝘀𝗶 𝗥𝗶𝗰𝗸𝘆𝘆.", threadID, messageID);
             } else {
-                return api.sendMessage("buti nalang pinatay mo sir nakakaawa na", threadID, messageID);
+                return api.sendMessage("Buti nalang pinatay mo sir, nakakaawa na.", threadID, messageID);
             }
         }
 
-        // ON LOGIC
         if (args[0] === "on") {
             const targetName = args.slice(1).join(" ");
-            
             if (!targetName) return api.sendMessage("𝗦𝗶𝗻𝗼 𝗮𝗻𝗴 𝗮𝗮𝘁𝗮𝗸𝗶𝗵𝗶𝗻 𝗸𝗼? (Usage: attack on [name])", threadID, messageID);
+            if (global.attackTimers.has(threadID)) return api.sendMessage("𝗠𝗮𝘆 𝗶𝗻𝗮𝗮𝘁𝗮𝗸𝗲 𝗽𝗮 𝗮𝗸𝗼, '𝗮𝘁𝘁𝗮𝗰𝗸 𝗼𝗳𝗳' 𝗺𝗼 𝗺𝘂𝗻𝗮.", threadID, messageID);
 
-            if (global.attackTimers.has(threadID)) {
-                return api.sendMessage("𝗠𝗮𝘆 𝗶𝗻𝗮𝗮𝘁𝗮𝗸𝗲 𝗽𝗮 𝗮𝗸𝗼, '𝗮𝘁𝘁𝗮𝗰𝗸 𝗼𝗳𝗳' 𝗺𝗼 𝗺𝘂𝗻𝗮.", threadID, messageID);
-            }
-
-            // BASAHIN ANG GALI.TXT
             let pambaraList = [];
             try {
                 if (fs.existsSync(galiPath)) {
@@ -53,38 +44,51 @@ module.exports = {
                     return api.sendMessage("❌ Error: gali.txt not found sa data folder.", threadID, messageID);
                 }
             } catch (e) {
-                return api.sendMessage("❌ Error reading gali.txt file.", threadID, messageID);
+                return api.sendMessage("❌ Error reading gali.txt.", threadID, messageID);
             }
 
             if (pambaraList.length === 0) return api.sendMessage("❌ Walang laman ang gali.txt mo.", threadID, messageID);
 
-            api.sendMessage(`tatagal ba sakin yan si "${targetName}" 👊\n sir rickyy? hindi makakatulog sakin yan 🥷🏻.`, threadID);
+            api.sendMessage(`Tatagal ba sakin yan si "${targetName}" 👊\nSir Rickyy? Hindi makakatulog sakin yan 🥷🏻.`, threadID);
 
             let index = 0;
-            let delay = 15000; // 15 seconds delay
 
-            const interval = setInterval(async () => {
-                // SUNOD-SUNOD NA PAG-SEND MULA SA GALI.TXT
+            const attackSequence = async () => {
+                if (!global.attackTimers.has(threadID)) return;
+
                 const finalMessage = `${targetName} ${pambaraList[index]}`;
-
-                api.sendMessage(finalMessage, threadID, (err, info) => {
-                    if (!err && info) {
-                        api.setMessageReaction("😆", info.messageID, () => {}, true);
-                    }
+                
+                // 1. Typing Indicator (Binabaan ko sa 1.5 seconds para mabilis)
+                api.sendTypingIndicator(threadID, () => {
+                    setTimeout(() => {
+                        // 2. Send Message
+                        api.sendMessage(finalMessage, threadID, (err, info) => {
+                            if (!err && info) {
+                                // 3. Reaction Delay (1.5 seconds pagkatapos ng message)
+                                setTimeout(() => {
+                                    api.setMessageReaction("😆", info.messageID, () => {}, true);
+                                }, 1500);
+                            }
+                        }, messageID);
+                    }, 1500); 
                 });
 
-                index++;
-                
-                // Pag umabot na sa dulo, balik sa simula
-                if (index >= pambaraList.length) {
-                    index = 0; 
-                }
-            }, delay);
+                index = (index + 1) % pambaraList.length;
 
-            global.attackTimers.set(threadID, interval);
+                // 4. RANDOM DELAY BETWEEN 10 TO 15 SECONDS
+                // Math.random() * (max - min) + min
+                const nextDelay = Math.floor(Math.random() * 5000) + 10000; 
+                
+                const timer = setTimeout(attackSequence, nextDelay);
+                global.attackTimers.set(threadID, timer);
+            };
+
+            // Simulan ang unang attack pagkalipas ng 2 seconds
+            const firstTimer = setTimeout(attackSequence, 2000);
+            global.attackTimers.set(threadID, firstTimer);
+
         } else {
             return api.sendMessage("Usage: attack on [name] | attack off", threadID, messageID);
         }
     }
 };
-                
