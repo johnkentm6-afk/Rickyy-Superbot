@@ -8,12 +8,7 @@ const handleAutoDetect = require('./handle/handleAutoDetect');
 const logs = require('../utility/logs');
 const path = require('path');
 
-let resendModule = null;
-try {
-  resendModule = require(path.join(__dirname, '../../raza/commands/resend.js'));
-} catch (e) {
-  console.log('Resend module not loaded:', e.message);
-}
+// NILINIS: Inalis ang resendModule try-catch block para mawala ang error sa logs.
 
 function listen({ api, client, Users, Threads, Currencies, config }) {
   return async (err, event) => {
@@ -33,32 +28,9 @@ function listen({ api, client, Users, Threads, Currencies, config }) {
           const body = event.body ? event.body.toLowerCase() : "";
           const botID = api.getCurrentUserID();
           
-          // 🛡️ SELF LISTEN & ADMIN CHECK:
-          // Papayagan ang message kung ang sender ay ADMIN o ang BOT mismo.
-          const isAdmin = config.ADMINBOT.includes(event.senderID) || event.senderID === botID;
-          
-          const hasPrefix = event.body && event.body.startsWith(config.PREFIX);
-          const isBotKeyword = body === "bot" || body === "pst" || body === "batako";
+          // NILINIS: Inalis ang manual "Admin Filter" dito para hindi na mag-conflict sa goibot event.
+          // Ang Admin Only mode ay dapat hinahawakan sa loob ng handleCommand.js para hindi ma-block ang events.
 
-          // SILENT ADMIN FILTER:
-          // Kung hindi admin/bot at nag-prefix o nag-keyword, hihinto dito.
-          if (!isAdmin && (hasPrefix || isBotKeyword)) {
-             return; 
-          }
-
-          if (resendModule && resendModule.logMessage) {
-            try {
-              // Inalis ang filter na 'event.senderID !== botID' para ma-log din ang sariling chat
-              await resendModule.logMessage(
-                event.messageID,
-                event.body,
-                event.attachments,
-                event.senderID,
-                event.threadID
-              );
-            } catch (e) {}
-          }
-          
           await handleCommand({
             api, event, client, Users, Threads, Currencies, config
           });
@@ -74,16 +46,6 @@ function listen({ api, client, Users, Threads, Currencies, config }) {
           }
           break;
         }
-          
-        case 'message_unsend':
-          if (resendModule && resendModule.handleUnsend) {
-            try {
-              await resendModule.handleUnsend(api, event, Users);
-            } catch (e) {
-              logs.error('RESEND', e.message);
-            }
-          }
-          break;
           
         case 'event':
           await handleEvent({
