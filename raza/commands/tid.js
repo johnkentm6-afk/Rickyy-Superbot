@@ -5,7 +5,7 @@ module.exports = {
     description: 'Get the thread/group ID',
     usage: 'tid',
     category: 'Utility',
-    prefix: true
+    prefix: false
   },
   
   async run({ api, event, send }) {
