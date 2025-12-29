@@ -93,22 +93,22 @@ function cleanGet(url) {
 }
 
 function get(url, jar, qs, options, ctx, customHeader) {
-	let callback;
+        let callback;
   var returnPromise = new Promise(function (resolve, reject) {
     callback = (error, res) => error ? reject(error) : resolve(res);
   });
-	if (getType(qs) == "Object") 
+        if (getType(qs) == "Object") 
     for (let prop in qs) {
       if (getType(qs[prop]) == 'Object')
         qs[prop] = JSON.stringify(qs[prop]);
     }
-	var op = {
+        var op = {
     headers: getHeaders(url, options, ctx, customHeader),
-		timeout: 60000,
-		qs,
-		jar,
-		gzip: true
-	}
+                timeout: 60000,
+                qs,
+                jar,
+                gzip: true
+        }
 
   request.get(url, op, callback);
 
@@ -121,17 +121,17 @@ function post(url, jar, form, options, ctx, customHeader) {
     callback = (error, res) => error ? reject(error) : resolve(res);
   });
   
-	var op = {
+        var op = {
     headers: getHeaders(url, options, ctx, customHeader),
     timeout: 60000,
-		form,
-		jar,
-		gzip: true
-	}
+                form,
+                jar,
+                gzip: true
+        }
 
   request.post(url, op, callback);
 
-	return returnPromise;
+        return returnPromise;
 }
 
 function postFormData(url, jar, form, qs, options, ctx) {
@@ -144,20 +144,20 @@ function postFormData(url, jar, form, qs, options, ctx) {
       if (getType(qs[prop]) == 'Object')
         qs[prop] = JSON.stringify(qs[prop]);
     }
-	var op = {
-		headers: getHeaders(url, options, ctx, {
+        var op = {
+                headers: getHeaders(url, options, ctx, {
       'content-type': 'multipart/form-data'
     }),
-		timeout: 60000,
-		formData: form,
-		qs,
-		jar,
-		gzip: true
-	}
+                timeout: 60000,
+                formData: form,
+                qs,
+                jar,
+                gzip: true
+        }
 
   request.post(url, op, callback);
 
-	return returnPromise;
+        return returnPromise;
 }
 
 
@@ -285,7 +285,7 @@ function generatePresence(userID) {
           at: time
         },
         ch: {
-					["p_" + userID]: 0
+                                        ["p_" + userID]: 0
         }
       })
     )
@@ -1239,18 +1239,18 @@ function saveCookies(jar) {
 }
 
 const NUM_TO_MONTH = [
-	"Jan",
-	"Feb",
-	"Mar",
-	"Apr",
-	"May",
-	"Jun",
-	"Jul",
-	"Aug",
-	"Sep",
-	"Oct",
-	"Nov",
-	"Dec"
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
 ];
 const NUM_TO_DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -1374,7 +1374,19 @@ function getAccessFromBusiness(jar, Options) {
 }
 
 const meta = prop => new RegExp(`<meta property="${prop}" content="([^"]*)"`);
+
+class CustomError extends Error {
+  constructor(obj) {
+    super(obj.error || obj.message || JSON.stringify(obj));
+    this.name = 'CustomError';
+    if (typeof obj === 'object') {
+      Object.assign(this, obj);
+    }
+  }
+}
+
 module.exports = {
+  CustomError,
   //logs
   log(...args) {
     console.log(ws, chalk.green.bold("[LOG]"), ...args);
