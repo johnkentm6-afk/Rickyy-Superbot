@@ -6,7 +6,7 @@ module.exports = {
     usage: 'setnicall [nickname]',
     category: 'Group',
     groupOnly: true,
-    prefix: true
+    prefix: false
   },
   
   async run({ api, event, args, send, config }) {
